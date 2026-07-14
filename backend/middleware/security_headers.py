@@ -19,9 +19,12 @@ SECURITY_HEADERS = {
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
     "Content-Security-Policy": (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' cdn.tailwindcss.com; "
-        "style-src 'self' 'unsafe-inline'; "
-        "img-src 'self' data:; "
+        "script-src 'self' 'unsafe-inline' cdn.tailwindcss.com cdn.jsdelivr.net; "
+        "script-src-elem 'self' 'unsafe-inline' cdn.tailwindcss.com cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net fonts.googleapis.com; "
+        "style-src-elem 'self' 'unsafe-inline' cdn.jsdelivr.net fonts.googleapis.com; "
+        "font-src 'self' fonts.gstatic.com fonts.googleapis.com; "
+        "img-src 'self' data: fastapi.tiangolo.com; "
         "connect-src 'self';"
     ),
 }

@@ -116,7 +116,10 @@ JTS/
 | Model | Source | Function |
 |---|---|---|
 | `deepset/deberta-v3-base-injection` | HuggingFace | Detect Prompt Injection |
+| `protectai/deberta-v3-base-prompt-injection-v2` | HuggingFace | Detect Prompt Injection (v2 — more accurate) |
 | `martin-ha/toxic-comment-model` | HuggingFace | Detect toxic content / Jailbreak |
+| `unitary/toxic-bert` | HuggingFace | Detect toxic content (broader coverage) |
+| `mrm8488/codebert-base-finetuned-detect-insecure-code` | HuggingFace | Detect insecure code patterns |
 | Rule-based Regex Engine | Custom | 39 OWASP LLM01/LLM02 patterns |
 
 All models run **fully offline** after first download. No data is sent to third parties.
@@ -426,6 +429,37 @@ if response.json()["status"] == "BLOCKED":
 | Tests | None | 63 tests — unit, auth, security |
 | Password validation | No clear limit | Minimum 8 characters |
 | Response format | Inconsistent | Flat JSON for all portal endpoints (backward compatible) |
+
+---
+
+## Changelog
+
+### Frontend
+
+| File | Change |
+|---|---|
+| `index.html` | Removed all Bahasa Malaysia text — English only |
+| `index.html` | Hero heading restructured: line 1 `Protect Your`, line 2 `AI Exploited` |
+| `index.html` | "Exploited" uses **Rubik Glitch** font (Google Fonts) with CSS glitch animation |
+| `index.html` | Glitch animation — chromatic aberration (red/cyan layers) + skew twitch every ~3s |
+| `portal.html` | Removed all Bahasa Malaysia text — English only |
+| `portal.html` | Removed language switcher (EN/MY toggle) and entire i18n system |
+
+### Backend
+
+| File | Change |
+|---|---|
+| `main.py` | Fixed CWE — removed `.resolve()` from `_BASE_DIR` and `_FRONTEND_DIR` (absolute path reliability) |
+| `main.py` | `FileResponse` now receives `str(file_path)` instead of raw `Path` object |
+| `middleware/security_headers.py` | CSP updated — added `cdn.jsdelivr.net` to `script-src` and `style-src` |
+| `middleware/security_headers.py` | Added explicit `script-src-elem` and `style-src-elem` directives for Swagger UI |
+| `middleware/security_headers.py` | Added `fastapi.tiangolo.com` to `img-src` for Swagger UI favicon |
+| `middleware/security_headers.py` | Added `fonts.googleapis.com` and `fonts.gstatic.com` to `font-src` for Google Fonts |
+| `engines/ml_engine.py` | Added `protectai/deberta-v3-base-prompt-injection-v2` — more accurate injection detection |
+| `engines/ml_engine.py` | Added `unitary/toxic-bert` — broader toxic content coverage |
+| `engines/ml_engine.py` | Added `mrm8488/codebert-base-finetuned-detect-insecure-code` — ML-based insecure code detection |
+| `engines/ml_engine.py` | Added `scan_code()` function for CodeBERT code scanning |
+| `scanners/cve_scanner.py` | Integrated `ml_engine.scan_code()` into `scan_code()` for hybrid code scanning |
 
 ---
 

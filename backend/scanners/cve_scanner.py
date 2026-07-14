@@ -7,6 +7,8 @@ Pematuhan: OWASP Top 10, CWE/SANS Top 25, NACSA, CSM
 import re
 from dataclasses import dataclass, field
 
+from engines import ml_engine
+
 
 @dataclass
 class Vulnerability:
@@ -204,7 +206,7 @@ COMPLIANCE_RULES = [
 
 # ── Scanner Function ──────────────────────────────────────────────────────────
 
-def scan_code(code: str, filename: str = "unknown") -> ScanResult:
+def scan_code(code: str, filename: str = "unknown", use_ml: bool = True) -> ScanResult:
     """
     Scan kod sumber untuk CVE/CWE vulnerabilities dan compliance flags.
     """
@@ -248,6 +250,21 @@ def scan_code(code: str, filename: str = "unknown") -> ScanResult:
                         "recommendation": rule["recommendation"],
                         "line_hint": f"{filename}:{i} → {line.strip()[:80]}",
                     })
+
+    # ML-based insecure code scan (CodeBERT)
+    if use_ml and ml_engine.is_available():
+        ml_result = ml_engine.scan_code(code)
+        if ml_result.status == "BLOCKED":
+            vulnerabilities.append(Vulnerability(
+                cwe_id="CWE-676",
+                cve_ref="N/A",
+                title="Insecure Code Pattern (ML)",
+                severity="HIGH",
+                description=f"CodeBERT detected insecure code pattern (confidence: {ml_result.confidence}).",
+                line_hint=f"{filename} — ML model: {ml_result.model_used}",
+                owasp_ref="A03:2021",
+            ))
+            severity_count["HIGH"] += 1
 
     return ScanResult(
         total_issues=len(vulnerabilities),
