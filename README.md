@@ -42,7 +42,14 @@ JTS/
 │   │   ├── ml_engine.py         # Pilihan 2: HuggingFace ML models
 │   │   ├── hybrid_engine.py     # Pilihan 3: Hybrid (Rule → ML)
 │   │   ├── cve_scanner.py       # CVE/CWE + NACSA/JPDP/MCMC scanner
-│   │   └── updater.py           # Engine auto-update (rules + models)
+│   │   ├── secret_scanner.py    # Secret & API key exposure scanner
+│   │   ├── dependency_scanner.py# Supply chain / dependency scanner
+│   │   ├── aggregator.py        # Project-level result aggregator
+│   │   ├── updater.py           # Engine auto-update (rules + models)
+│   │   └── ingest/
+│   │       ├── github_ingest.py # GitHub repo clone & scan
+│   │       ├── zip_ingest.py    # ZIP upload extract & scan
+│   │       └── url_ingest.py    # Live URL DAST scanner
 │   ├── compliance/
 │   │   └── scorer.py            # Compliance scoring engine
 │   └── reports/
@@ -221,6 +228,62 @@ Imbas kod sumber untuk CVE/CWE.
   "compliance_score": { "overall": 72.5, "grade": "B", "breakdown": {...} }
 }
 ```
+
+#### `POST /api/v1/scan/repo`
+Scan keseluruhan repo GitHub untuk CVE/CWE, secrets, dan dependency issues.
+
+```json
+// Request
+{ "repo_url": "https://github.com/user/repo", "branch": "main" }
+
+// Response
+{
+  "scan_type": "github_repo",
+  "target": "https://github.com/user/repo",
+  "total_files_scanned": 42,
+  "total_issues": 15,
+  "severity_breakdown": { "critical": 2, "high": 5, "medium": 6, "low": 2 },
+  "issues_by_file": { "src/api/auth.js": [...] },
+  "compliance_score": { "overall": 68.0, "grade": "C", "breakdown": {...} },
+  "scan_duration_seconds": 8.4,
+  "timestamp": "2026-07-14T00:00:00+00:00"
+}
+```
+
+Had: Repo mesti public, saiz < 200MB, < 500 fail.
+
+#### `POST /api/v1/scan/url`
+Scan laman web hidup untuk isu keselamatan (DAST asas).
+
+```json
+// Request
+{ "url": "https://target-website.com" }
+
+// Response
+{
+  "scan_type": "live_url",
+  "target": "https://target-website.com",
+  "total_issues": 4,
+  "severity_breakdown": { "critical": 0, "high": 2, "medium": 2, "low": 0 },
+  "issues_by_file": { "live_url": [...] },
+  "compliance_score": { "overall": 60.0, "grade": "C" },
+  "scan_duration_seconds": 12.1
+}
+```
+
+Semakan: Exposed paths, security headers, error leak, CORS, SSL/TLS.
+
+#### `POST /api/v1/scan/upload`
+Upload fail ZIP projek untuk di-scan.
+
+```
+// Request: multipart/form-data
+field: file (ZIP)
+
+// Response: sama format dengan /api/v1/scan/repo
+```
+
+Had: Saiz ZIP < 200MB selepas extract, < 500 fail.
 
 ---
 

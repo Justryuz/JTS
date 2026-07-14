@@ -4,6 +4,8 @@ Backend API Server + Detection Engine
 OWASP-compliant FastAPI application
 """
 
+from __future__ import annotations
+
 import hashlib
 import os
 import re
@@ -17,9 +19,9 @@ import os
 sys.path.insert(0, os.path.dirname(__file__))
 
 import jwt
-from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 from pydantic import BaseModel, field_validator
@@ -27,6 +29,7 @@ from sqlalchemy import Boolean, Column, DateTime, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from engine import rule_engine, hybrid_engine, cve_scanner, updater
+from engine.ingest import github_ingest, zip_ingest, url_ingest
 from compliance import scorer
 from reports import pdf_generator
 
@@ -196,8 +199,19 @@ class GenerateKeyRequest(BaseModel):
     allowed_domain: str
 
 
+class RepoScanRequest(BaseModel):
+    repo_url: str
+    branch: str = "main"
+
+
+class UrlScanRequest(BaseModel):
+    url: str
+    prompt: str
+
+
 class ShieldRequest(BaseModel):
     prompt: str
+    engine_mode: str = "hybrid"  # rule | ml | hybrid
 
 
 class CodeScanRequest(BaseModel):
@@ -221,15 +235,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def _serve_frontend_page(page_name: str) -> FileResponse:
+    page_path = os.path.join(FRONTEND_DIR, page_name)
+    if not os.path.exists(page_path):
+        raise HTTPException(status_code=404, detail="Page not found")
+    return FileResponse(page_path)
+
+
 # Serve landing page
 @app.get("/", include_in_schema=False)
 def serve_landing():
-    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+    return _serve_frontend_page("index.html")
+
+
+@app.get("/index.html", include_in_schema=False)
+def serve_landing_index():
+    return _serve_frontend_page("index.html")
+
 
 # Serve portal dashboard
 @app.get("/portal", include_in_schema=False)
 def serve_portal():
-    return FileResponse(os.path.join(FRONTEND_DIR, "portal.html"))
+    return _serve_frontend_page("portal.html")
+
+
+@app.get("/portal/", include_in_schema=False)
+def serve_portal_slash():
+    return _serve_frontend_page("portal.html")
+
+
+@app.get("/portal.html", include_in_schema=False)
+def serve_portal_html():
+    return _serve_frontend_page("portal.html")
 
 
 # --- Auth Endpoints ---
@@ -372,15 +409,20 @@ def shield(
     if api_key_record.allowed_domain != x_origin_domain.lower().strip():
         raise HTTPException(status_code=403, detail="Domain not authorized for this API key")
 
-    # Run Detection Engine (Hybrid: Rule + ML)
-    if body.engine_mode if hasattr(body, 'engine_mode') else True:
-        result = hybrid_engine.scan(body.prompt, use_ml=hybrid_engine.ml_engine.is_available())
-        detection_status = result.status
-        attack_type = result.attack_type
-    else:
+    # Run Detection Engine based on requested mode
+    mode = (body.engine_mode or "hybrid").strip().lower()
+    if mode == "rule":
         rule_result = rule_engine.scan(body.prompt)
         detection_status = rule_result.status
         attack_type = rule_result.attack_type
+    elif mode == "ml":
+        result = hybrid_engine.scan(body.prompt, use_ml=True)
+        detection_status = result.status
+        attack_type = result.attack_type
+    else:
+        result = hybrid_engine.scan(body.prompt, use_ml=hybrid_engine.ml_engine.is_available())
+        detection_status = result.status
+        attack_type = result.attack_type
 
     # Record transaction
     log = SecurityLog(
@@ -397,6 +439,59 @@ def shield(
         return {"status": "BLOCKED", "reason": attack_type}
 
     return {"status": "ALLOWED"}
+
+
+# --- Scan Endpoints (Repo / URL / ZIP) ---
+
+def _validate_api_key(x_api_key: str, x_origin_domain: str, db: Session) -> ApiKey:
+    key_hash = sha256_hash(x_api_key)
+    record = db.query(ApiKey).filter(ApiKey.api_key_hash == key_hash, ApiKey.is_active.is_(True)).first()
+    if not record:
+        raise HTTPException(status_code=401, detail="Invalid or inactive API key")
+    if record.allowed_domain != x_origin_domain.lower().strip():
+        raise HTTPException(status_code=403, detail="Domain not authorized")
+    return record
+
+
+@app.post("/api/v1/scan/repo")
+def scan_repo(
+    body: RepoScanRequest,
+    x_api_key: str = Header(..., alias="X-API-Key"),
+    x_origin_domain: str = Header(..., alias="X-Origin-Domain"),
+    db: Session = Depends(get_db),
+):
+    _validate_api_key(x_api_key, x_origin_domain, db)
+    result = github_ingest.scan_github_repo(body.repo_url, body.branch)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
+@app.post("/api/v1/scan/url")
+def scan_url(
+    body: UrlScanRequest,
+    x_api_key: str = Header(..., alias="X-API-Key"),
+    x_origin_domain: str = Header(..., alias="X-Origin-Domain"),
+    db: Session = Depends(get_db),
+):
+    _validate_api_key(x_api_key, x_origin_domain, db)
+    result = url_ingest.scan_live_url(body.url)
+    return result
+
+
+@app.post("/api/v1/scan/upload")
+async def scan_upload(
+    x_api_key: str = Header(..., alias="X-API-Key"),
+    x_origin_domain: str = Header(..., alias="X-Origin-Domain"),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    _validate_api_key(x_api_key, x_origin_domain, db)
+    file_bytes = await file.read()
+    result = zip_ingest.scan_zip_upload(file_bytes)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
 
 
 # --- Code Scan Endpoint ---
