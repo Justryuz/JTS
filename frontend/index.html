@@ -293,9 +293,19 @@
         }
     }
 
+    function resetTerminal() {
+        document.getElementById('curlCommand').textContent = '';
+        document.getElementById('headerLine').textContent = '';
+        document.getElementById('dataLine').textContent = '';
+        document.getElementById('responseLine').textContent = '';
+        document.getElementById('cmdCursor').style.display = 'inline';
+        document.getElementById('respCursor').style.display = 'none';
+    }
+
     async function animateTerminal() {
+        resetTerminal();
         await sleep(400);
-        await typeLine('curlCommand', 'curl -X POST https://api.TrustGuard.my/api/v1/shield', 28);
+        await typeLine('curlCommand', 'curl -X POST https://api.trustguard.my/api/v1/shield', 28);
         await sleep(180);
         await typeLine('headerLine', '"X-API-Key: aisec_live_xxxx"', 16);
         await sleep(120);
@@ -304,6 +314,13 @@
         await typeLine('responseLine', '{"status": "BLOCKED", "reason": "PROMPT_INJECTION"}', 18);
         document.getElementById('cmdCursor').style.display = 'none';
         document.getElementById('respCursor').style.display = 'inline';
+    }
+
+    async function animateLoop() {
+        while (true) {
+            await animateTerminal();
+            await sleep(2200);
+        }
     }
 
     async function checkHealth() {
@@ -345,6 +362,7 @@
 
     checkHealth();
     setInterval(checkHealth, 30000);
+    animateLoop();
 
     if (localStorage.getItem('aisec_token')) {
         window.location.href = '/portal';
