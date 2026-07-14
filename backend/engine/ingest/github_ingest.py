@@ -54,7 +54,7 @@ def scan_github_repo(repo_url: str, branch: str = "main") -> dict:
     except ValueError as e:
         return {"error": str(e)}
 
-    tmp_dir = tempfile.mkdtemp(prefix="justguard_")
+    tmp_dir = tempfile.mkdtemp(prefix="TrustGuard_")
     start = time.time()
 
     try:
@@ -70,7 +70,7 @@ def scan_github_repo(repo_url: str, branch: str = "main") -> dict:
         except subprocess.CalledProcessError:
             # Retry dengan branch default
             shutil.rmtree(tmp_dir, ignore_errors=True)
-            tmp_dir = tempfile.mkdtemp(prefix="justguard_")
+            tmp_dir = tempfile.mkdtemp(prefix="TrustGuard_")
             subprocess.run(
                 ["git", "clone", "--depth=1", "--", repo_url, tmp_dir],
                 timeout=SCAN_TIMEOUT,

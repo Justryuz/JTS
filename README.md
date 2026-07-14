@@ -1,4 +1,4 @@
-# JustGuard — AI Security Gateway
+# TrustGuard — AI Security Gateway
 
 > Sistem keselamatan berpusat untuk melindungi model LLM dan aplikasi AI daripada serangan siber, prompt injection, jailbreak, dan kelemahan kod.
 
@@ -6,7 +6,7 @@
 
 ## Objektif
 
-JustGuard dibina untuk menjawab keperluan keselamatan AI yang semakin kritikal di Malaysia dan global. Platform ini bertindak sebagai **lapisan pertahanan berpusat** antara pengguna dan model AI, memastikan setiap interaksi diimbas, dilog, dan dinilai mengikut standard keselamatan antarabangsa dan tempatan.
+TrustGuard dibina untuk menjawab keperluan keselamatan AI yang semakin kritikal di Malaysia dan global. Platform ini bertindak sebagai **lapisan pertahanan berpusat** antara pengguna dan model AI, memastikan setiap interaksi diimbas, dilog, dan dinilai mengikut standard keselamatan antarabangsa dan tempatan.
 
 **Matlamat utama:**
 - Melindungi model LLM daripada Prompt Injection & Jailbreak (OWASP LLM Top 10)

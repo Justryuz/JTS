@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JustGuard — AI Security Gateway</title>
+    <title>TrustGuard — AI Security Gateway</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐛</text></svg>">
     <style>
@@ -49,8 +49,7 @@
                     <path d="M9 12l2 2 4-4"/>
                 </svg>
             </div>
-            <span class="font-bold text-lg text-white tracking-tight">JustGuard</span>
-            <span class="mono text-xs px-2 py-0.5 bg-indigo-950/60 text-indigo-400 rounded border border-indigo-800/50">v1.0.0</span>
+            <span class="font-bold text-lg text-white tracking-tight">TrustGuard</span>
         </div>
         <div class="flex items-center gap-3">
             <!-- Health Status Badge -->
@@ -79,7 +78,7 @@
     </h1>
 
     <p class="text-lg text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-        JustGuard adalah <span class="text-slate-200 font-medium">AI Security Gateway</span> berpusat yang melindungi model LLM dan aplikasi AI anda daripada Prompt Injection, Jailbreak, dan kelemahan CVE/CWE — mengikut standard Malaysia dan antarabangsa.
+        TrustGuard adalah <span class="text-slate-200 font-medium">AI Security Gateway</span> berpusat yang melindungi model LLM dan aplikasi AI anda daripada Prompt Injection, Jailbreak, dan kelemahan CVE/CWE — mengikut standard Malaysia dan antarabangsa.
     </p>
 
     <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
@@ -99,10 +98,10 @@
             <span class="h-3 w-3 rounded-full bg-rose-500/70"></span>
             <span class="h-3 w-3 rounded-full bg-yellow-500/70"></span>
             <span class="h-3 w-3 rounded-full bg-emerald-500/70"></span>
-            <span class="mono text-xs text-slate-500 ml-2">justguard — shield endpoint</span>
+            <span class="mono text-xs text-slate-500 ml-2">TrustGuard — shield endpoint</span>
         </div>
         <div class="p-5 mono text-sm space-y-2">
-            <p><span class="text-slate-500">$</span> <span class="text-emerald-400">curl</span> <span class="text-slate-300">-X POST https://api.justguard.my/api/v1/shield</span></p>
+            <p><span class="text-slate-500">$</span> <span class="text-emerald-400">curl</span> <span class="text-slate-300">-X POST https://api.TrustGuard.my/api/v1/shield</span></p>
             <p class="text-slate-500 pl-4">-H <span class="text-yellow-400">"X-API-Key: aisec_live_xxxx"</span></p>
             <p class="text-slate-500 pl-4">-d <span class="text-yellow-400">'{"prompt": "ignore previous instructions..."}'</span></p>
             <div class="border-t border-slate-800 pt-3 mt-3">
@@ -130,13 +129,8 @@
                 <p id="hEngine" class="mono text-sm font-bold text-slate-600">—</p>
             </div>
             <div class="bg-slate-800/40 rounded-lg p-4 text-center">
-                <p class="mono text-xs text-slate-500 mb-1">ML Models</p>
+                <p class="mono text-xs text-slate-500 mb-1">ML Model</p>
                 <p id="hML" class="mono text-sm font-bold text-slate-600">—</p>
-                <div id="hMLModels" class="mt-2 space-y-1 hidden">
-                    <p class="mono text-xs text-slate-500">deberta-v3-base-injection</p>
-                    <p class="mono text-xs text-slate-500">toxic-comment-model</p>
-                    <p class="mono text-xs text-slate-500">rule-engine (34 patterns)</p>
-                </div>
             </div>
             <div class="bg-slate-800/40 rounded-lg p-4 text-center">
                 <p class="mono text-xs text-slate-500 mb-1">Version</p>
@@ -208,39 +202,26 @@
         <p class="mono text-xs text-indigo-400 tracking-widest mb-3">// INTEGRASI</p>
         <h2 class="text-3xl font-black text-white">Sambung dalam 2 Langkah</h2>
     </div>
-    <div class="flex flex-col md:flex-row items-center gap-0 max-w-3xl mx-auto">
-        <!-- Step 01 -->
-        <div class="bg-slate-900/40 border border-slate-800/60 rounded-xl p-6 flex-1 w-full">
-            <div class="flex items-center gap-3 mb-3">
-                <span class="mono text-xs font-black text-indigo-500/60 bg-indigo-950/40 border border-indigo-900/40 px-2 py-0.5 rounded">01</span>
-                <h3 class="font-bold text-white text-sm">Daftar & Jana API Key</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div class="bg-slate-900/40 border border-slate-800/60 rounded-xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="mono text-2xl font-black text-indigo-500/40">01</span>
+                <h3 class="font-bold text-white">Jana API Key</h3>
             </div>
-            <div class="bg-[#0d1117] rounded-lg p-3 mono text-xs text-emerald-400">aisec_live_a3f9b2c1d4e5...</div>
-        </div>
-        <!-- Arrow -->
-        <div class="text-slate-600 text-2xl px-3 rotate-90 md:rotate-0">→</div>
-        <!-- Step 02 -->
-        <div class="bg-slate-900/40 border border-slate-800/60 rounded-xl p-6 flex-1 w-full">
-            <div class="flex items-center gap-3 mb-3">
-                <span class="mono text-xs font-black text-indigo-500/60 bg-indigo-950/40 border border-indigo-900/40 px-2 py-0.5 rounded">02</span>
-                <h3 class="font-bold text-white text-sm">Hantar Prompt → Shield</h3>
-            </div>
-            <div class="bg-[#0d1117] rounded-lg p-3 mono text-xs space-y-1">
-                <p><span class="text-indigo-400">POST</span> <span class="text-slate-400">/api/v1/shield</span></p>
-                <p><span class="text-slate-600">↳</span> <span class="text-emerald-400">ALLOWED</span> <span class="text-slate-600">|</span> <span class="text-rose-400">BLOCKED</span></p>
+            <p class="text-sm text-slate-400 mb-4">Daftar akaun, masukkan domain anda, dan jana API Key yang unik. Key disimpan sebagai SHA-256 hash.</p>
+            <div class="bg-[#0d1117] rounded-lg p-3 mono text-xs text-emerald-400">
+                aisec_live_a3f9b2c1d4e5...
             </div>
         </div>
-        <!-- Arrow -->
-        <div class="text-slate-600 text-2xl px-3 rotate-90 md:rotate-0">→</div>
-        <!-- Step 03 -->
-        <div class="bg-slate-900/40 border border-slate-800/60 rounded-xl p-6 flex-1 w-full">
-            <div class="flex items-center gap-3 mb-3">
-                <span class="mono text-xs font-black text-indigo-500/60 bg-indigo-950/40 border border-indigo-900/40 px-2 py-0.5 rounded">03</span>
-                <h3 class="font-bold text-white text-sm">AI Model Proses</h3>
+        <div class="bg-slate-900/40 border border-slate-800/60 rounded-xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="mono text-2xl font-black text-indigo-500/40">02</span>
+                <h3 class="font-bold text-white">Hantar Prompt ke Shield</h3>
             </div>
-            <div class="bg-[#0d1117] rounded-lg p-3 mono text-xs space-y-1">
-                <p><span class="text-slate-600">✓</span> <span class="text-slate-400">Prompt selamat diproses</span></p>
-                <p><span class="text-slate-600">✗</span> <span class="text-rose-400/70">Ancaman ditolak terus</span></p>
+            <p class="text-sm text-slate-400 mb-4">Setiap prompt pengguna dihantar ke <code class="text-indigo-400">/api/v1/shield</code> sebelum diproses oleh model AI anda.</p>
+            <div class="bg-[#0d1117] rounded-lg p-3 mono text-xs text-slate-400 space-y-1">
+                <p><span class="text-indigo-400">POST</span> /api/v1/shield</p>
+                <p><span class="text-slate-600">→</span> <span class="text-emerald-400">ALLOWED</span> / <span class="text-rose-400">BLOCKED</span></p>
             </div>
         </div>
     </div>
@@ -252,30 +233,14 @@
         <p class="mono text-xs text-slate-500 tracking-widest">// STANDARD & PEMATUHAN</p>
     </div>
     <div class="flex flex-wrap justify-center gap-3">
-        <div title="OWASP Top 10" class="p-2 bg-slate-900/60 border border-slate-700/50 rounded-xl hover:border-indigo-700/50 transition-colors cursor-default">
-            <svg viewBox="0 0 60 28" class="h-8" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="28" rx="5" fill="#004A97"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="10" font-weight="bold" fill="white" font-family="Arial">OWASP</text></svg>
-        </div>
-        <div title="OWASP LLM Top 10" class="p-2 bg-slate-900/60 border border-slate-700/50 rounded-xl hover:border-indigo-700/50 transition-colors cursor-default">
-            <svg viewBox="0 0 72 28" class="h-8" xmlns="http://www.w3.org/2000/svg"><rect width="72" height="28" rx="5" fill="#004A97"/><text x="36" y="11" dominant-baseline="middle" text-anchor="middle" font-size="9" font-weight="bold" fill="white" font-family="Arial">OWASP</text><text x="36" y="22" dominant-baseline="middle" text-anchor="middle" font-size="9" font-weight="bold" fill="#93c5fd" font-family="Arial">LLM Top 10</text></svg>
-        </div>
-        <div title="CWE/SANS Top 25" class="p-2 bg-slate-900/60 border border-slate-700/50 rounded-xl hover:border-indigo-700/50 transition-colors cursor-default">
-            <svg viewBox="0 0 72 28" class="h-8" xmlns="http://www.w3.org/2000/svg"><rect width="72" height="28" rx="5" fill="#1a1a2e"/><text x="36" y="11" dominant-baseline="middle" text-anchor="middle" font-size="10" font-weight="bold" fill="#f97316" font-family="Arial">CWE</text><text x="36" y="22" dominant-baseline="middle" text-anchor="middle" font-size="8" fill="#94a3b8" font-family="Arial">SANS Top 25</text></svg>
-        </div>
-        <div title="NACSA AI Security Framework" class="p-2 bg-slate-900/60 border border-slate-700/50 rounded-xl hover:border-indigo-700/50 transition-colors cursor-default">
-            <svg viewBox="0 0 60 28" class="h-8" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="28" rx="5" fill="#003366"/><text x="30" y="11" dominant-baseline="middle" text-anchor="middle" font-size="10" font-weight="bold" fill="#fbbf24" font-family="Arial">NACSA</text><text x="30" y="22" dominant-baseline="middle" text-anchor="middle" font-size="7" fill="#93c5fd" font-family="Arial">Malaysia</text></svg>
-        </div>
-        <div title="JPDP / PDPA 2010" class="p-2 bg-slate-900/60 border border-slate-700/50 rounded-xl hover:border-indigo-700/50 transition-colors cursor-default">
-            <svg viewBox="0 0 72 28" class="h-8" xmlns="http://www.w3.org/2000/svg"><rect width="72" height="28" rx="5" fill="#1e3a5f"/><text x="36" y="11" dominant-baseline="middle" text-anchor="middle" font-size="10" font-weight="bold" fill="#34d399" font-family="Arial">JPDP</text><text x="36" y="22" dominant-baseline="middle" text-anchor="middle" font-size="7.5" fill="#94a3b8" font-family="Arial">PDPA 2010</text></svg>
-        </div>
-        <div title="MCMC CMA 1998" class="p-2 bg-slate-900/60 border border-slate-700/50 rounded-xl hover:border-indigo-700/50 transition-colors cursor-default">
-            <svg viewBox="0 0 72 28" class="h-8" xmlns="http://www.w3.org/2000/svg"><rect width="72" height="28" rx="5" fill="#1a3a1a"/><text x="36" y="11" dominant-baseline="middle" text-anchor="middle" font-size="10" font-weight="bold" fill="#4ade80" font-family="Arial">MCMC</text><text x="36" y="22" dominant-baseline="middle" text-anchor="middle" font-size="7.5" fill="#86efac" font-family="Arial">CMA 1998</text></svg>
-        </div>
-        <div title="AIGE — Etika AI Kebangsaan" class="p-2 bg-slate-900/60 border border-slate-700/50 rounded-xl hover:border-indigo-700/50 transition-colors cursor-default">
-            <svg viewBox="0 0 60 28" class="h-8" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="28" rx="5" fill="#2d1b69"/><text x="30" y="11" dominant-baseline="middle" text-anchor="middle" font-size="11" font-weight="bold" fill="#a78bfa" font-family="Arial">AIGE</text><text x="30" y="22" dominant-baseline="middle" text-anchor="middle" font-size="7" fill="#c4b5fd" font-family="Arial">AI Ethics</text></svg>
-        </div>
-        <div title="MY-AI Standards — SIRIM/JSM" class="p-2 bg-slate-900/60 border border-slate-700/50 rounded-xl hover:border-indigo-700/50 transition-colors cursor-default">
-            <svg viewBox="0 0 72 28" class="h-8" xmlns="http://www.w3.org/2000/svg"><rect width="72" height="28" rx="5" fill="#3b1f00"/><text x="36" y="11" dominant-baseline="middle" text-anchor="middle" font-size="9" font-weight="bold" fill="#fb923c" font-family="Arial">MY-AI</text><text x="36" y="22" dominant-baseline="middle" text-anchor="middle" font-size="7.5" fill="#fdba74" font-family="Arial">SIRIM/JSM</text></svg>
-        </div>
+            <span class="mono text-xs px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 text-slate-400 rounded-full">OWASP Top 10</span>
+        <span class="mono text-xs px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 text-slate-400 rounded-full">OWASP LLM Top 10</span>
+        <span class="mono text-xs px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 text-slate-400 rounded-full">CWE/SANS Top 25</span>
+        <span class="mono text-xs px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 text-slate-400 rounded-full">NACSA</span>
+        <span class="mono text-xs px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 text-slate-400 rounded-full">JPDP/PDPA 2010</span>
+        <span class="mono text-xs px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 text-slate-400 rounded-full">MCMC CMA 1998</span>
+        <span class="mono text-xs px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 text-slate-400 rounded-full">AIGE</span>
+        <span class="mono text-xs px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 text-slate-400 rounded-full">MY-AI Standards</span>
     </div>
 </section>
 
@@ -283,7 +248,7 @@
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 z-10 relative">
     <div class="bg-indigo-950/30 border border-indigo-800/30 rounded-2xl p-12 text-center glow-indigo">
         <h2 class="text-3xl font-black text-white mb-4">Mula Lindungi AI Anda Sekarang</h2>
-        <p class="text-slate-400 mb-8 max-w-lg mx-auto">Daftar percuma, jana API Key, dan integrasikan JustGuard ke dalam sistem AI anda dalam masa 5 minit.</p>
+        <p class="text-slate-400 mb-8 max-w-lg mx-auto">Daftar percuma, jana API Key, dan integrasikan TrustGuard ke dalam sistem AI anda dalam masa 5 minit.</p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="/portal" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all">
                 Daftar Percuma
@@ -302,35 +267,48 @@
             <div class="bg-indigo-600/20 border border-indigo-500/30 p-1.5 rounded-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             </div>
-            <span class="mono text-xs text-slate-500">JustGuard v1.0.0 — AI Security Gateway</span>
+            <span class="mono text-xs text-slate-500">TrustGuard — AI Security Gateway</span>
         </div>
-        <span class="mono text-xs text-slate-600">Built with love from Sungai Buloh, Malaysia</span>
+        <span class="mono text-xs text-slate-600">Made with ❤️ from Sungai Buloh, Malaysia</span>
     </div>
 </footer>
 
 <script>
-    // Health check
+    const healthCandidates = [
+        '/health',
+        'http://127.0.0.1:8000/health',
+        'http://localhost:8000/health'
+    ];
+
     async function checkHealth() {
         const badge = document.getElementById('healthBadge');
-        try {
-            const res = await fetch('/health');
-            const d = await res.json();
+        let data = null;
 
-            // Navbar badge
+        for (const url of healthCandidates) {
+            try {
+                const res = await fetch(url, { cache: 'no-store' });
+                if (res.ok) {
+                    data = await res.json();
+                    break;
+                }
+            } catch {
+                // Try next candidate
+            }
+        }
+
+        if (data) {
             badge.innerHTML = `<span class="h-2 w-2 rounded-full bg-emerald-500 badge-glow animate-pulse"></span><span class="text-emerald-400">ONLINE</span>`;
             badge.className = badge.className.replace('border-slate-700/50','border-emerald-800/50').replace('bg-slate-800/60','bg-emerald-950/30');
 
-            // Health grid
-            document.getElementById('hStatus').textContent = d.status.toUpperCase();
+            document.getElementById('hStatus').textContent = data.status.toUpperCase();
             document.getElementById('hStatus').className = 'mono text-sm font-bold text-emerald-400';
-            document.getElementById('hEngine').textContent = d.engine;
+            document.getElementById('hEngine').textContent = data.engine;
             document.getElementById('hEngine').className = 'mono text-sm font-bold text-emerald-400';
-            document.getElementById('hML').textContent = d.ml_available ? 'LOADED' : 'OFFLINE';
-            document.getElementById('hML').className = `mono text-sm font-bold ${d.ml_available ? 'text-emerald-400' : 'text-amber-400'}`;
-            document.getElementById('hMLModels').classList.toggle('hidden', !d.ml_available);
-            document.getElementById('hVersion').textContent = d.version;
+            document.getElementById('hML').textContent = data.ml_available ? 'LOADED' : 'OFFLINE';
+            document.getElementById('hML').className = `mono text-sm font-bold ${data.ml_available ? 'text-emerald-400' : 'text-amber-400'}`;
+            document.getElementById('hVersion').textContent = data.version;
             document.getElementById('hVersion').className = 'mono text-sm font-bold text-indigo-400';
-        } catch {
+        } else {
             badge.innerHTML = `<span class="h-2 w-2 rounded-full bg-rose-500"></span><span class="text-rose-400">OFFLINE</span>`;
             ['hStatus','hEngine','hML','hVersion'].forEach(id => {
                 document.getElementById(id).textContent = 'ERR';
@@ -342,7 +320,6 @@
     checkHealth();
     setInterval(checkHealth, 30000);
 
-    // Redirect to portal if already logged in
     if (localStorage.getItem('aisec_token')) {
         window.location.href = '/portal';
     }

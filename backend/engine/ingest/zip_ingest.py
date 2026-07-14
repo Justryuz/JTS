@@ -26,7 +26,7 @@ SCAN_TIMEOUT = 60
 
 def scan_zip_upload(file_bytes: bytes) -> dict:
     """Extract ZIP dan scan semua fail kod untuk CVE/CWE, secrets, dan dependencies."""
-    tmp_dir = tempfile.mkdtemp(prefix="justguard_zip_")
+    tmp_dir = tempfile.mkdtemp(prefix="TrustGuard_zip_")
     start = time.time()
 
     try:

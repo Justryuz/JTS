@@ -160,7 +160,7 @@ def scan_live_url(url: str) -> dict:
 
         # 3. Verbose error leak check
         try:
-            r = client.get(base_url + "/__justguard_test_404__")
+            r = client.get(base_url + "/__TrustGuard_test_404__")
             time.sleep(REQUEST_DELAY)
             body = r.text.lower()
             leak_keywords = ["traceback", "stack trace", "exception", "at line", "syntax error", "django", "flask", "laravel"]
@@ -179,10 +179,10 @@ def scan_live_url(url: str) -> dict:
 
         # 4. CORS check
         try:
-            r = client.get(base_url, headers={"Origin": "https://evil-test.justguard.my"})
+            r = client.get(base_url, headers={"Origin": "https://evil-test.TrustGuard.my"})
             time.sleep(REQUEST_DELAY)
             acao = r.headers.get("access-control-allow-origin", "")
-            if acao == "*" or "evil-test.justguard.my" in acao:
+            if acao == "*" or "evil-test.TrustGuard.my" in acao:
                 issues.append({
                     "type": "CORS_WILDCARD",
                     "severity": "HIGH",
