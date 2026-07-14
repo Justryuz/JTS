@@ -149,6 +149,33 @@ Jana API Key baru untuk domain. Key dipaparkan **sekali sahaja**.
 #### `GET /portal/api-keys`
 Senarai semua API key milik pengguna.
 
+#### `GET /portal/api-key/{key_id}`
+Semak status API key, sama ada domain telah di-verify dan dapatkan arahan verification.
+
+#### `POST /portal/api-key/{key_id}/verify`
+Verify domain ownership dan trigger auto-scan. Jika `repo_url` dihantar, sistem akan turut scan repo GitHub.
+
+```json
+// Request
+{
+  "target_url": "https://lamanweb.com",
+  "repo_url": "https://github.com/user/repo",
+  "branch": "main"
+}
+
+// Response
+{
+  "verified_domain": "lamanweb.com",
+  "target_url": "https://lamanweb.com",
+  "live_scan": { ... },
+  "repo_scan": { ... },
+  "summary": {
+    "live_scan": { ... },
+    "repo_scan": { ... }
+  }
+}
+```
+
 #### `DELETE /portal/api-key/{key_id}`
 Revoke API key.
 

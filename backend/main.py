@@ -25,9 +25,10 @@ from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 from pydantic import BaseModel, Field, field_validator
-from sqlalchemy import Boolean, Column, DateTime, String, Text, create_engine
+from sqlalchemy import Boolean, Column, DateTime, String, Text, create_engine, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
+import httpx
 from engine import rule_engine, hybrid_engine, cve_scanner, updater
 from engine.ingest import github_ingest, zip_ingest, url_ingest
 from compliance import scorer
@@ -70,6 +71,10 @@ class ApiKey(Base):
     api_key_hash = Column(String, nullable=False, index=True)  # SHA-256
     allowed_domain = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
+    is_verified = Column(Boolean, default=False)
+    verification_token = Column(String, nullable=True)
+    verification_method = Column(String, default="http_file")
+    verified_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
@@ -85,6 +90,19 @@ class SecurityLog(Base):
 
 
 Base.metadata.create_all(bind=engine)
+
+# Perform lightweight schema migration for new ApiKey verification fields
+with engine.connect() as conn:
+    result = conn.execute(text("PRAGMA table_info(api_keys)"))
+    columns = {row[1] for row in result.fetchall()}
+    if "is_verified" not in columns:
+        conn.execute(text("ALTER TABLE api_keys ADD COLUMN is_verified BOOLEAN DEFAULT 0"))
+    if "verification_token" not in columns:
+        conn.execute(text("ALTER TABLE api_keys ADD COLUMN verification_token TEXT"))
+    if "verification_method" not in columns:
+        conn.execute(text("ALTER TABLE api_keys ADD COLUMN verification_method TEXT DEFAULT 'http_file'"))
+    if "verified_at" not in columns:
+        conn.execute(text("ALTER TABLE api_keys ADD COLUMN verified_at DATETIME"))
 
 # ---------------------------------------------------------------------------
 # DETECTION ENGINE (Heuristic / Rule-Based)
@@ -152,6 +170,87 @@ def sha256_hash(value: str) -> str:
     return hashlib.sha256(value.encode()).hexdigest()
 
 
+def build_verification_instructions(domain: str, token: str) -> str:
+    return (
+        f"Simpan token ini di https://{domain}/.well-known/trustguard.txt\n"
+        f"Kandungan fail mesti sama dengan token berikut:\n{token}"
+    )
+
+
+def build_scan_summary(report: dict) -> dict:
+    if report is None:
+        return {
+            "overview": "Tiada laporan tersedia.",
+            "grade": "F",
+            "issues_found": 0,
+            "critical": 0,
+            "high": 0,
+            "recommendations": ["Tiada data scan tersedia."],
+        }
+    if "error" in report:
+        return {
+            "overview": f"Scan gagal: {report['error']}",
+            "grade": "F",
+            "issues_found": 0,
+            "critical": 0,
+            "high": 0,
+            "recommendations": ["Betulkan isu scan dan cuba semula."],
+        }
+
+    total = report.get("total_issues", 0)
+    high = report.get("severity_breakdown", {}).get("high", 0)
+    critical = report.get("severity_breakdown", {}).get("critical", 0)
+    grade = report.get("compliance_score", {}).get("grade", "F")
+    message = "Tiada isu utama ditemui. Web anda kelihatan kukuh." if total == 0 else (
+        "Perlukan perhatian segera: isu kritikal ditemui." if critical > 0 else (
+            "Beberapa isu keselamatan ditemui; semak dan betulkan segera." if high > 0 else "Isu sederhana ditemi: pembaikan disarankan."))
+
+    recommendations = []
+    if critical > 0:
+        recommendations.append("Segera semak isu kritikal dan perbaiki konfigurasi keselamatan.")
+    if high > 0:
+        recommendations.append("Tingkatkan response headers dan semak sebarang endpoint terbuka.")
+    if total == 0:
+        recommendations.append("Teruskan pemantauan berkala dan kemaskini dependencies.")
+    else:
+        recommendations.append("Gunakan laporan terperinci untuk memperbaiki setiap kelemahan.")
+
+    return {
+        "overview": message,
+        "grade": grade,
+        "issues_found": total,
+        "critical": critical,
+        "high": high,
+        "recommendations": recommendations,
+    }
+
+
+def verify_domain_file(target_url: str, token: str) -> bool:
+    try:
+        response = httpx.get(target_url, timeout=15, follow_redirects=True)
+        if response.status_code != 200:
+            return False
+        return response.text.strip() == token.strip()
+    except Exception:
+        return False
+
+
+def run_auto_scan_for_key(api_key: ApiKey, body: VerifyDomainRequest) -> dict:
+    domain = api_key.allowed_domain
+    target_url = body.target_url or f"https://{domain}"
+    result = {"verified_domain": domain, "target_url": target_url}
+    result["live_scan"] = url_ingest.scan_live_url(target_url)
+
+    if body.repo_url:
+        result["repo_scan"] = github_ingest.scan_github_repo(body.repo_url, body.branch)
+
+    result["summary"] = {
+        "live_scan": build_scan_summary(result["live_scan"]),
+        **({"repo_scan": build_scan_summary(result["repo_scan"])} if body.repo_url else {}),
+    }
+    return result
+
+
 def create_jwt(user_id: str) -> str:
     payload = {
         "sub": user_id,
@@ -206,7 +305,6 @@ class RepoScanRequest(BaseModel):
 
 class UrlScanRequest(BaseModel):
     url: str
-    prompt: str
 
 
 class ShieldRequest(BaseModel):
@@ -218,6 +316,13 @@ class CodeScanRequest(BaseModel):
     code: str
     filename: str = "unknown"
     engine_mode: str = "hybrid"  # rule | ml | hybrid
+
+
+class VerifyDomainRequest(BaseModel):
+    method: str = "http_file"
+    target_url: Optional[str] = None
+    repo_url: Optional[str] = None
+    branch: str = "main"
 
 
 # ---------------------------------------------------------------------------
@@ -359,19 +464,24 @@ def generate_api_key(
     # Generate plain key — shown ONCE only
     plain_key = f"aisec_live_{secrets.token_hex(24)}"
     key_hash = sha256_hash(plain_key)
+    verification_token = secrets.token_urlsafe(16)
 
     api_key = ApiKey(
         user_id=user_id,
         api_key_hash=key_hash,
         allowed_domain=body.allowed_domain.lower().strip(),
+        verification_token=verification_token,
+        verification_method="http_file",
     )
     db.add(api_key)
     db.commit()
 
-    # Return plain key ONCE — never stored in plain text
     return {
         "api_key": plain_key,
         "allowed_domain": api_key.allowed_domain,
+        "verification_method": api_key.verification_method,
+        "verification_token": verification_token,
+        "verification_instructions": build_verification_instructions(api_key.allowed_domain, verification_token),
         "warning": "Copy this key now. It will NOT be shown again.",
     }
 
@@ -389,10 +499,79 @@ def list_api_keys(user_id: str = Depends(verify_jwt), db: Session = Depends(get_
             "id": k.id,
             "allowed_domain": k.allowed_domain,
             "is_active": k.is_active,
+            "is_verified": k.is_verified,
+            "verification_method": k.verification_method,
             "created_at": k.created_at,
+            "verified_at": k.verified_at,
         }
         for k in keys
     ]
+
+
+@app.post(
+    "/portal/api-key/{key_id}/verify",
+    tags=["Portal"],
+    summary="Verify domain ownership and trigger auto-scan",
+    description="Sahkan pemilikan domain menggunakan fail verification, kemudian jalankan auto-scan live web dan optional repo scan.",
+)
+def verify_api_key_domain(
+    key_id: str,
+    body: VerifyDomainRequest,
+    user_id: str = Depends(verify_jwt),
+    db: Session = Depends(get_db),
+):
+    api_key = db.query(ApiKey).filter(ApiKey.id == key_id, ApiKey.user_id == user_id, ApiKey.is_active.is_(True)).first()
+    if not api_key:
+        raise HTTPException(status_code=404, detail="API key not found")
+    if api_key.is_verified:
+        raise HTTPException(status_code=400, detail="Domain already verified")
+    if api_key.verification_method != "http_file":
+        raise HTTPException(status_code=400, detail="Unsupported verification method")
+
+    domain = api_key.allowed_domain
+    target_url = body.target_url.strip() if body.target_url else f"https://{domain}"
+    verification_file_url = target_url.rstrip("/") + "/.well-known/trustguard.txt"
+
+    if not verify_domain_file(verification_file_url, api_key.verification_token or ""):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Verification failed. Pastikan fail trustguard.txt mengandungi token yang diberikan "
+                "dan boleh dicapai dari URL tersebut."
+            ),
+        )
+
+    api_key.is_verified = True
+    api_key.verified_at = datetime.now(timezone.utc)
+    db.commit()
+
+    return run_auto_scan_for_key(api_key, body)
+
+
+@app.get(
+    "/portal/api-key/{key_id}",
+    tags=["Portal"],
+    summary="Dapatkan status API key",
+    description="Lihat sama ada domain sudah verified dan ambil arahan verification yang diperlukan.",
+)
+def get_api_key_status(
+    key_id: str,
+    user_id: str = Depends(verify_jwt),
+    db: Session = Depends(get_db),
+):
+    api_key = db.query(ApiKey).filter(ApiKey.id == key_id, ApiKey.user_id == user_id).first()
+    if not api_key:
+        raise HTTPException(status_code=404, detail="API key not found")
+
+    return {
+        "id": api_key.id,
+        "allowed_domain": api_key.allowed_domain,
+        "is_active": api_key.is_active,
+        "is_verified": api_key.is_verified,
+        "verification_method": api_key.verification_method,
+        "verified_at": api_key.verified_at,
+        "verification_instructions": build_verification_instructions(api_key.allowed_domain, api_key.verification_token or ""),
+    }
 
 
 @app.delete(

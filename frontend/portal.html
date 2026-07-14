@@ -110,6 +110,39 @@
                 </div>
             </div>
 
+            <div id="verifyKeyPanel" class="hidden bg-slate-950/50 border border-indigo-800 p-4 rounded-xl space-y-4">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <p class="text-xs text-slate-500 uppercase tracking-wider">Verification Panel</p>
+                        <h3 class="text-lg font-semibold text-white">Verify Domain & Auto Scan</h3>
+                    </div>
+                    <span id="verifyKeyStatus" class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-950 text-amber-300">Menunggu</span>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800">
+                        <p class="text-xs text-slate-400 mb-2">Domain</p>
+                        <p id="verifyKeyDomain" class="font-mono text-sm text-white">—</p>
+                    </div>
+                    <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800">
+                        <p class="text-xs text-slate-400 mb-2">Target URL verification</p>
+                        <input id="verifyTargetUrl" type="text" placeholder="https://domain.com"
+                            class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400 mb-2">Arahan verification</p>
+                    <pre id="verifyInstructions" class="whitespace-pre-wrap bg-slate-900/70 border border-slate-800 rounded-lg p-3 text-xs text-slate-300"></pre>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                    <input id="verifyRepoUrl" type="text" placeholder="https://github.com/user/repo"
+                        class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
+                    <input id="verifyBranch" type="text" placeholder="main"
+                        class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
+                    <button id="verifyButton" onclick="submitVerifyKey()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm rounded-lg px-4 py-2 transition-colors">Verify & Scan</button>
+                </div>
+                <div id="verifyResult" class="hidden bg-slate-900 border border-slate-800 rounded-lg p-4 text-sm text-slate-200"></div>
+            </div>
+
             <div id="keysTableWrap" class="hidden space-y-3">
                 <h3 class="text-sm font-semibold text-slate-300">Kunci API Aktif</h3>
                 <div class="overflow-x-auto rounded-lg border border-slate-700">
