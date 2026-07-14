@@ -69,23 +69,40 @@ SECRET_PATTERNS = [
 ]
 
 
+def _redact(value: str) -> str:
+    """Mask nilai secret — kekalkan 4 aksara depan & belakang sahaja untuk verification."""
+    if len(value) <= 10:
+        return "*" * len(value)
+    return f"{value[:4]}{'*' * (len(value) - 8)}{value[-4:]}"
+
+
 def scan_secrets(file_content: str, filename: str) -> list[dict]:
-    """Scan kandungan fail untuk secrets dan API keys yang terdedah."""
+    """Scan kandungan fail untuk secrets dan API keys yang terdedah.
+
+    PENTING: nilai secret sebenar TIDAK PERNAH dimasukkan ke dalam output.
+    Hanya versi redacted (masked) sahaja yang direkod dalam laporan/log.
+    """
     findings = []
     lines = file_content.splitlines()
 
     for rule in SECRET_PATTERNS:
         for i, line in enumerate(lines, start=1):
-            if re.search(rule["pattern"], line):
-                # Redact nilai sebenar dari output
-                findings.append({
-                    "type": rule["type"],
-                    "severity": "CRITICAL",
-                    "line": i,
-                    "line_hint": f"{filename}:{i} → {line.strip()[:60]}...",
-                    "description": rule["description"],
-                    "recommendation": rule["recommendation"],
-                    "simple_explanation": f"Kunci rahsia atau kata laluan ditemui dalam fail `{filename}` baris {i}. Sesiapa yang ada akses ke kod ini boleh gunakan kunci tersebut untuk akses sistem anda.",
-                })
+            match = re.search(rule["pattern"], line)
+            if not match:
+                continue
+
+            matched_value = match.group(0)
+            redacted_value = _redact(matched_value)
+            redacted_line = line.replace(matched_value, redacted_value)
+
+            findings.append({
+                "type": rule["type"],
+                "severity": "CRITICAL",
+                "line": i,
+                "line_hint": f"{filename}:{i} → {redacted_line.strip()[:80]}",
+                "description": rule["description"],
+                "recommendation": rule["recommendation"],
+                "simple_explanation": f"Kunci rahsia atau kata laluan ditemui dalam fail `{filename}` baris {i}. Sesiapa yang ada akses ke kod ini boleh gunakan kunci tersebut untuk akses sistem anda.",
+            })
 
     return findings
