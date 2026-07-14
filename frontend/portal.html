@@ -213,6 +213,14 @@
 <script>
     const API = '';
 
+    function parseDetail(detail, fallback) {
+        if (!detail) return fallback;
+        if (typeof detail === 'string') return detail;
+        if (Array.isArray(detail)) return detail.map(e => e.msg || JSON.stringify(e)).join(', ');
+        if (typeof detail === 'object') return detail.description || detail.title || detail.message || fallback;
+        return fallback;
+    }
+
     function getToken() { return localStorage.getItem('aisec_token'); }
     function getEmail() { return localStorage.getItem('aisec_email'); }
 
@@ -224,7 +232,7 @@
             body: JSON.stringify({ email, password })
         });
         const data = await res.json();
-        if (!res.ok) return showAuthError(data.detail || 'Pendaftaran gagal');
+        if (!res.ok) return showAuthError(parseDetail(data.detail, 'Pendaftaran gagal'));
         showAuthError('Akaun berjaya didaftar! Sila log masuk.', 'ok');
     }
 
@@ -236,7 +244,7 @@
             body: JSON.stringify({ email, password })
         });
         const data = await res.json();
-        if (!res.ok) return showAuthError(data.detail || 'Log masuk gagal');
+        if (!res.ok) return showAuthError(parseDetail(data.detail, 'Log masuk gagal'));
         localStorage.setItem('aisec_token', data.access_token);
         localStorage.setItem('aisec_email', email);
         showPortal();

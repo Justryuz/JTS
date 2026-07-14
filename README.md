@@ -1,4 +1,4 @@
-# TrustGuard — AI Security Gateway
+# TrustGuard v2.0 — Enterprise AI Security Gateway
 
 > Sistem keselamatan berpusat untuk melindungi model LLM dan aplikasi AI daripada serangan siber, prompt injection, jailbreak, dan kelemahan kod.
 
@@ -20,43 +20,93 @@ TrustGuard dibina untuk menjawab keperluan keselamatan AI yang semakin kritikal 
 
 | Perkara | Butiran |
 |---|---|
-| Versi | 1.0.0 |
+| Versi | 2.0.0 |
 | Bahasa Backend | Python 3.12 |
 | Framework | FastAPI |
 | Database | SQLite (boleh migrate ke PostgreSQL) |
 | ML Engine | HuggingFace Transformers |
 | Frontend | HTML + Tailwind CSS |
+| Persekitaran | WSL (Ubuntu) — jalankan dari Linux filesystem |
 | Lokasi Pembangunan | Sungai Buloh, Selangor, Malaysia |
 
 ---
 
-## Komponen Sistem
+## Komponen Sistem (v2.0 — Clean Architecture)
 
 ```
 JTS/
 ├── backend/
-│   ├── main.py                  # FastAPI server utama
+│   ├── main.py                      # App factory — middleware + routers sahaja
 │   ├── requirements.txt
-│   ├── engine/
-│   │   ├── rule_engine.py       # Pilihan 1: Rule-based (39 pattern OWASP)
-│   │   ├── ml_engine.py         # Pilihan 2: HuggingFace ML models
-│   │   ├── hybrid_engine.py     # Pilihan 3: Hybrid (Rule → ML)
-│   │   ├── cve_scanner.py       # CVE/CWE + NACSA/JPDP/MCMC scanner
-│   │   ├── secret_scanner.py    # Secret & API key exposure scanner
-│   │   ├── dependency_scanner.py# Supply chain / dependency scanner
-│   │   ├── aggregator.py        # Project-level result aggregator
-│   │   ├── updater.py           # Engine auto-update (rules + models)
-│   │   └── ingest/
-│   │       ├── github_ingest.py # GitHub repo clone & scan
-│   │       ├── zip_ingest.py    # ZIP upload extract & scan
-│   │       └── url_ingest.py    # Live URL DAST scanner
+│   ├── .env                         # Konfigurasi persekitaran (JANGAN commit)
+│   ├── config/
+│   │   ├── settings.py              # Pydantic BaseSettings — semua config dari .env
+│   │   └── constants.py             # Enums: AttackType, ErrorCode (TG-XXXX), Severity
+│   ├── models/
+│   │   ├── base.py                  # DeclarativeBase, TimestampMixin, UUIDPrimaryKeyMixin
+│   │   ├── user.py                  # User model (RBAC: admin/analyst/developer/auditor)
+│   │   ├── api_key.py               # ApiKey model
+│   │   └── log.py                   # PromptLog, AuditLog, ScanJob
+│   ├── schemas/
+│   │   ├── common.py                # StandardResponse, ErrorResponse
+│   │   ├── auth.py                  # RegisterRequest, LoginRequest (min 8 chars)
+│   │   ├── gateway.py               # ShieldRequest, ResponseFirewallRequest
+│   │   └── scan.py                  # CodeScanRequest, RepoScanRequest, UrlScanRequest
+│   ├── services/
+│   │   ├── auth_service.py          # AuthService — tiada FastAPI dependency
+│   │   ├── shield_service.py        # ShieldService dengan TTLCache
+│   │   └── api_key_service.py       # ApiKeyService
+│   ├── repositories/
+│   │   ├── user_repo.py
+│   │   ├── api_key_repo.py
+│   │   └── log_repo.py              # Append-only AuditLog, ScanJob CRUD
+│   ├── middleware/
+│   │   ├── request_id.py            # X-Request-ID header
+│   │   ├── security_headers.py      # CSP, HSTS, X-Frame-Options
+│   │   ├── rate_limit.py            # Sliding window per-IP
+│   │   └── audit_log.py             # JSON structured logging
+│   ├── engines/
+│   │   ├── rule_engine.py           # Rule-based (39 pattern OWASP)
+│   │   ├── ml_engine.py             # HuggingFace ML models
+│   │   └── hybrid_engine.py         # Hybrid (Rule → ML)
+│   ├── scanners/
+│   │   ├── cve_scanner.py           # CVE/CWE + NACSA/JPDP/MCMC scanner
+│   │   ├── secret_scanner.py        # Secret & API key exposure scanner
+│   │   ├── dependency_scanner.py    # Supply chain / dependency scanner
+│   │   └── aggregator.py            # Project-level result aggregator
+│   ├── ingest/
+│   │   ├── github_ingest.py         # GitHub repo clone & scan
+│   │   ├── zip_ingest.py            # ZIP upload extract & scan
+│   │   └── url_ingest.py            # Live URL DAST scanner
+│   ├── api/v1/
+│   │   ├── auth.py                  # /portal/auth/register, /login
+│   │   ├── portal.py                # /portal/stats, /logs, /api-keys, /generate
+│   │   ├── gateway.py               # /api/v1/shield
+│   │   ├── scan.py                  # /api/v1/scan/code|repo|url|upload
+│   │   ├── admin.py                 # /admin/update
+│   │   └── report.py                # /portal/report/pdf
+│   ├── utils/
+│   │   ├── hashing.py
+│   │   ├── jwt_utils.py             # Access + refresh tokens
+│   │   ├── cache.py                 # TTLCache
+│   │   └── domain_verify.py
+│   ├── database/
+│   │   └── session.py               # SQLite/PostgreSQL, WAL mode, auto-migration
 │   ├── compliance/
-│   │   └── scorer.py            # Compliance scoring engine
-│   └── reports/
-│       └── pdf_generator.py     # PDF audit report generator
+│   │   └── scorer.py
+│   ├── reports/
+│   │   └── pdf_generator.py
+│   ├── engine/                      # Legacy (dikekalkan untuk backward compat)
+│   │   └── updater.py
+│   └── tests/
+│       ├── unit/
+│       │   ├── test_rule_engine.py  # 39 parametrized tests
+│       │   └── test_auth_service.py # 6 tests
+│       └── security/
+│           └── test_security.py     # SSRF, path traversal, injection tests
 └── frontend/
-    ├── index.html               # Landing page
-    └── portal.html              # Management portal
+    ├── index.html                   # Landing page
+    └── portal.html                  # Management portal
 ```
 
 ---
@@ -104,14 +154,17 @@ Dokumentasi interaktif (Swagger UI): `http://localhost:8000/docs`
 ### Auth Endpoints
 
 #### `POST /portal/auth/register`
-Daftar akaun pengguna baru.
+Daftar akaun pengguna baru. Kata laluan minimum 8 aksara.
 
 ```json
 // Request
-{ "email": "user@example.com", "password": "kata_laluan" }
+{ "email": "user@example.com", "password": "kataLaluan8" }
 
 // Response 201
 { "message": "User registered successfully" }
+
+// Response 409 — email sudah didaftarkan
+{ "detail": "Emel user@example.com telah didaftarkan." }
 ```
 
 #### `POST /portal/auth/login`
@@ -119,10 +172,13 @@ Log masuk dan dapatkan JWT token.
 
 ```json
 // Request
-{ "email": "user@example.com", "password": "kata_laluan" }
+{ "email": "user@example.com", "password": "kataLaluan8" }
 
 // Response 200
-{ "access_token": "eyJ...", "token_type": "bearer" }
+{ "access_token": "eyJ...", "refresh_token": "eyJ...", "token_type": "bearer" }
+
+// Response 401 — kelayakan tidak sah
+{ "detail": "Emel atau kata laluan tidak betul." }
 ```
 
 ---
@@ -147,13 +203,13 @@ Jana API Key baru untuk domain. Key dipaparkan **sekali sahaja**.
 ```
 
 #### `GET /portal/api-keys`
-Senarai semua API key milik pengguna.
+Senarai semua API key milik pengguna. Return array terus.
 
 #### `GET /portal/api-key/{key_id}`
-Semak status API key, sama ada domain telah di-verify dan dapatkan arahan verification.
+Semak status API key dan dapatkan arahan domain verification.
 
 #### `POST /portal/api-key/{key_id}/verify`
-Verify domain ownership dan trigger auto-scan. Jika `repo_url` dihantar, sistem akan turut scan repo GitHub.
+Verify domain ownership dan trigger auto-scan.
 
 ```json
 // Request
@@ -162,32 +218,20 @@ Verify domain ownership dan trigger auto-scan. Jika `repo_url` dihantar, sistem 
   "repo_url": "https://github.com/user/repo",
   "branch": "main"
 }
-
-// Response
-{
-  "verified_domain": "lamanweb.com",
-  "target_url": "https://lamanweb.com",
-  "live_scan": { ... },
-  "repo_scan": { ... },
-  "summary": {
-    "live_scan": { ... },
-    "repo_scan": { ... }
-  }
-}
 ```
 
 #### `DELETE /portal/api-key/{key_id}`
 Revoke API key.
 
 #### `GET /portal/stats`
-Statistik imbasan prompt.
+Statistik imbasan prompt. Return flat JSON.
 
 ```json
 { "total_requests": 100, "total_blocked": 12, "engine_status": "ACTIVE" }
 ```
 
 #### `GET /portal/logs`
-Log keselamatan real-time (100 terkini).
+Log keselamatan real-time (100 terkini). Return array terus.
 
 #### `GET /portal/compliance/{domain}`
 Skor pematuhan untuk domain tertentu.
@@ -202,7 +246,7 @@ Jana laporan audit PDF.
 ```
 
 #### `POST /admin/update`
-Kemaskini rule patterns OWASP terkini dan/atau refresh ML models dari HuggingFace. Memerlukan JWT.
+Kemaskini rule patterns OWASP dan/atau refresh ML models. Memerlukan JWT.
 
 ```json
 // Request
@@ -262,19 +306,6 @@ Scan keseluruhan repo GitHub untuk CVE/CWE, secrets, dan dependency issues.
 ```json
 // Request
 { "repo_url": "https://github.com/user/repo", "branch": "main" }
-
-// Response
-{
-  "scan_type": "github_repo",
-  "target": "https://github.com/user/repo",
-  "total_files_scanned": 42,
-  "total_issues": 15,
-  "severity_breakdown": { "critical": 2, "high": 5, "medium": 6, "low": 2 },
-  "issues_by_file": { "src/api/auth.js": [...] },
-  "compliance_score": { "overall": 68.0, "grade": "C", "breakdown": {...} },
-  "scan_duration_seconds": 8.4,
-  "timestamp": "2026-07-14T00:00:00+00:00"
-}
 ```
 
 Had: Repo mesti public, saiz < 200MB, < 500 fail.
@@ -285,17 +316,6 @@ Scan laman web hidup untuk isu keselamatan (DAST asas).
 ```json
 // Request
 { "url": "https://target-website.com" }
-
-// Response
-{
-  "scan_type": "live_url",
-  "target": "https://target-website.com",
-  "total_issues": 4,
-  "severity_breakdown": { "critical": 0, "high": 2, "medium": 2, "low": 0 },
-  "issues_by_file": { "live_url": [...] },
-  "compliance_score": { "overall": 60.0, "grade": "C" },
-  "scan_duration_seconds": 12.1
-}
 ```
 
 Semakan: Exposed paths, security headers, error leak, CORS, SSL/TLS.
@@ -306,8 +326,6 @@ Upload fail ZIP projek untuk di-scan.
 ```
 // Request: multipart/form-data
 field: file (ZIP)
-
-// Response: sama format dengan /api/v1/scan/repo
 ```
 
 Had: Saiz ZIP < 200MB selepas extract, < 500 fail.
@@ -317,13 +335,12 @@ Had: Saiz ZIP < 200MB selepas extract, < 500 fail.
 ### System Endpoint
 
 #### `GET /health`
-Semak status sistem.
 
 ```json
 {
   "status": "ok",
   "engine": "ACTIVE",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "ml_available": true
 }
 ```
@@ -332,8 +349,10 @@ Semak status sistem.
 
 ## Cara Pasang & Jalankan
 
+> **Penting:** Jalankan dari WSL (Linux filesystem), bukan terus dari Windows. SQLite WAL mode tidak berfungsi pada NTFS (`/mnt/c/`).
+
 ```bash
-# 1. Clone / masuk direktori
+# 1. Buka WSL terminal, masuk direktori
 cd /mnt/c/Users/fahmi/Downloads/JTS/backend
 
 # 2. Buat virtual environment
@@ -343,14 +362,29 @@ source venv/bin/activate
 # 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Set JWT secret
-export JWT_SECRET=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+# 4. Salin dan edit fail .env
+# JWT_SECRET sudah ada dalam .env — tukar jika perlu
+# DATABASE_URL gunakan path Linux: sqlite:////tmp/trustguard/aisec.db
 
 # 5. Jalankan server
 python main.py
 ```
 
 Buka `http://localhost:8000` dalam browser.
+
+### Nota WSL / Windows
+
+| Isu | Penyelesaian |
+|---|---|
+| SQLite WAL error pada `/mnt/c/` | Guna `DATABASE_URL=sqlite:////tmp/trustguard/aisec.db` |
+| Server guna kod lama selepas edit | Delete `__pycache__` dan restart server |
+| Python 3.13 (Windows) vs 3.12 (WSL) | Pastikan jalankan dalam WSL venv |
+
+```bash
+# Delete cache jika server guna kod lama
+find . -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null
+python main.py
+```
 
 ---
 
@@ -377,6 +411,21 @@ response = requests.post(
 if response.json()["status"] == "BLOCKED":
     return "Permintaan anda tidak dapat diproses."
 ```
+
+---
+
+## Perubahan v2.0 (daripada v1.0)
+
+| Bahagian | v1.0 | v2.0 |
+|---|---|---|
+| Struktur | Monolith 700-baris `main.py` | Clean Architecture — config, models, schemas, services, repositories |
+| Auth | Inline dalam `main.py` | `AuthService` berasingan, boleh diuji tanpa FastAPI |
+| Middleware | Tiada | RequestID, SecurityHeaders, RateLimit, AuditLog |
+| Error codes | String rawak | TG-XXXX series (TG-1001 hingga TG-9001) |
+| Database | SQLite sahaja | SQLite + PostgreSQL, WAL mode, auto-migration |
+| Tests | Tiada | 63 tests — unit, auth, security |
+| Password validator | Tiada had jelas | Minimum 8 aksara (validator huruf besar dibuang) |
+| Response format | Tidak konsisten | Flat JSON untuk semua portal endpoints (backward compatible) |
 
 ---
 
