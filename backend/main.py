@@ -24,7 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import Boolean, Column, DateTime, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
@@ -225,7 +225,49 @@ class CodeScanRequest(BaseModel):
 # ---------------------------------------------------------------------------
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
 
-app = FastAPI(title="AI Security Gateway", version="1.0.0")
+tags_metadata = [
+    {
+        "name": "Auth",
+        "description": "Endpoint pendaftaran dan log masuk untuk menguruskan akses portal.",
+    },
+    {
+        "name": "Portal",
+        "description": "Pengurusan kunci API, log keselamatan, dan statistik pengguna.",
+    },
+    {
+        "name": "Shield",
+        "description": "Gateway awam untuk menapis dan mengesahkan prompt AI sebelum diproses.",
+    },
+    {
+        "name": "Scan",
+        "description": "Imbasan repo, URL, ZIP dan kod untuk kelemahan serta isu keselamatan.",
+    },
+    {
+        "name": "Compliance",
+        "description": "Skor pematuhan dan laporan audit untuk domain dan kod sumber.",
+    },
+    {
+        "name": "Admin",
+        "description": "Alat pentadbir untuk mengemaskini peraturan dan model pengesanan.",
+    },
+    {
+        "name": "Health",
+        "description": "Semakan kesihatan aplikasi dan ketersediaan enjin.",
+    },
+]
+
+app = FastAPI(
+    title="TrustGuard AI Security Gateway",
+    description=(
+        "TrustGuard AI adalah platform keselamatan berpusat untuk melindungi aplikasi AI daripada Prompt Injection, "
+        "Jailbreak, dan kelemahan kod. Gunakan /docs untuk melihat semua endpoint API dengan info lengkap dan contoh penggunaan."
+    ),
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    openapi_tags=tags_metadata,
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -271,7 +313,13 @@ def serve_portal_html():
 
 # --- Auth Endpoints ---
 
-@app.post("/portal/auth/register", status_code=201)
+@app.post(
+    "/portal/auth/register",
+    status_code=201,
+    tags=["Auth"],
+    summary="Daftar pengguna baru",
+    description="Buat akaun pengguna baru untuk portal TrustGuard AI. Emel akan dinormalisasikan dan kata laluan dihash dengan selamat.",
+)
 def register(body: RegisterRequest, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == body.email).first():
         raise HTTPException(status_code=409, detail="Email already registered")
@@ -281,7 +329,12 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
     return {"message": "User registered successfully"}
 
 
-@app.post("/portal/auth/login")
+@app.post(
+    "/portal/auth/login",
+    tags=["Auth"],
+    summary="Log masuk pengguna",
+    description="Dapatkan token JWT untuk pengguna berdaftar supaya boleh mengakses endpoint portal yang dilindungi.",
+)
 def login(body: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == body.email).first()
     if not user or not pwd_context.verify(body.password, user.password_hash):
@@ -291,7 +344,13 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
 
 # --- Portal Endpoints (JWT Protected) ---
 
-@app.post("/portal/api-key/generate", status_code=201)
+@app.post(
+    "/portal/api-key/generate",
+    status_code=201,
+    tags=["Portal"],
+    summary="Jana API Key baru",
+    description="Jana kunci API terikat kepada domain untuk digunakan oleh aplikasi anda apabila memanggil TrustGuard AI shield gateway.",
+)
 def generate_api_key(
     body: GenerateKeyRequest,
     user_id: str = Depends(verify_jwt),
@@ -317,7 +376,12 @@ def generate_api_key(
     }
 
 
-@app.get("/portal/api-keys")
+@app.get(
+    "/portal/api-keys",
+    tags=["Portal"],
+    summary="Senarai kunci API",
+    description="Dapatkan semua kunci API aktif yang telah dijana untuk pengguna yang sedang log masuk.",
+)
 def list_api_keys(user_id: str = Depends(verify_jwt), db: Session = Depends(get_db)):
     keys = db.query(ApiKey).filter(ApiKey.user_id == user_id).all()
     return [
@@ -331,7 +395,12 @@ def list_api_keys(user_id: str = Depends(verify_jwt), db: Session = Depends(get_
     ]
 
 
-@app.delete("/portal/api-key/{key_id}")
+@app.delete(
+    "/portal/api-key/{key_id}",
+    tags=["Portal"],
+    summary="Nyahaktifkan kunci API",
+    description="Tamatkan akses satu kunci API supaya ia tidak lagi boleh digunakan untuk memanggil endpoint TrustGuard.",
+)
 def revoke_api_key(
     key_id: str,
     user_id: str = Depends(verify_jwt),
@@ -345,7 +414,12 @@ def revoke_api_key(
     return {"message": "API key revoked"}
 
 
-@app.get("/portal/logs")
+@app.get(
+    "/portal/logs",
+    tags=["Portal"],
+    summary="Dapatkan log keselamatan",
+    description="Tunjukkan log semua permintaan yang melalui TrustGuard AI untuk kunci API pengguna dan status keselamatan mereka.",
+)
 def get_logs(
     user_id: str = Depends(verify_jwt),
     db: Session = Depends(get_db),
@@ -373,7 +447,12 @@ def get_logs(
     ]
 
 
-@app.get("/portal/stats")
+@app.get(
+    "/portal/stats",
+    tags=["Portal"],
+    summary="Statistik penggunaan",
+    description="Paparkan ringkasan jumlah permintaan dan berapa banyak yang diblok bagi pengguna portal TrustGuard.",
+)
 def get_stats(user_id: str = Depends(verify_jwt), db: Session = Depends(get_db)):
     user_key_ids = [k.id for k in db.query(ApiKey).filter(ApiKey.user_id == user_id).all()]
     total = db.query(SecurityLog).filter(SecurityLog.api_key_id.in_(user_key_ids)).count()
@@ -387,7 +466,15 @@ def get_stats(user_id: str = Depends(verify_jwt), db: Session = Depends(get_db))
 
 # --- Public Shield Gateway ---
 
-@app.post("/api/v1/shield")
+@app.post(
+    "/api/v1/shield",
+    tags=["Shield"],
+    summary="Shield prompt AI",
+    description=(
+        "Panggilan utama untuk menghantar prompt ke TrustGuard AI sebelum ia dihantar ke model LLM. "
+        "Endpoint ini akan mengesahkan API key, domain asal dan menapis prompt untuk Prompt Injection atau Jailbreak."
+    ),
+)
 def shield(
     body: ShieldRequest,
     x_api_key: str = Header(..., alias="X-API-Key"),
@@ -453,7 +540,12 @@ def _validate_api_key(x_api_key: str, x_origin_domain: str, db: Session) -> ApiK
     return record
 
 
-@app.post("/api/v1/scan/repo")
+@app.post(
+    "/api/v1/scan/repo",
+    tags=["Scan"],
+    summary="Imbas repo GitHub",
+    description="Imbas repositori GitHub untuk kelemahan kod dan konfigurasi tanpa perlu muat turun keseluruhan projek secara manual.",
+)
 def scan_repo(
     body: RepoScanRequest,
     x_api_key: str = Header(..., alias="X-API-Key"),
@@ -467,7 +559,12 @@ def scan_repo(
     return result
 
 
-@app.post("/api/v1/scan/url")
+@app.post(
+    "/api/v1/scan/url",
+    tags=["Scan"],
+    summary="Imbas laman web secara langsung",
+    description="Imbas URL langsung untuk mencari masalah DAST, kelemahan HTML/JS, dan isu keselamatan pada API yang diakses.",
+)
 def scan_url(
     body: UrlScanRequest,
     x_api_key: str = Header(..., alias="X-API-Key"),
@@ -479,7 +576,12 @@ def scan_url(
     return result
 
 
-@app.post("/api/v1/scan/upload")
+@app.post(
+    "/api/v1/scan/upload",
+    tags=["Scan"],
+    summary="Imbas muat naik ZIP",
+    description="Terima ZIP kod dan imbas kandungan untuk kelemahan keselamatan, kebocoran rahsia, dan isu pematuhan.",
+)
 async def scan_upload(
     x_api_key: str = Header(..., alias="X-API-Key"),
     x_origin_domain: str = Header(..., alias="X-Origin-Domain"),
@@ -496,7 +598,12 @@ async def scan_upload(
 
 # --- Code Scan Endpoint ---
 
-@app.post("/api/v1/scan/code")
+@app.post(
+    "/api/v1/scan/code",
+    tags=["Scan"],
+    summary="Imbas kod sumber",
+    description="Imbas blok kod atau fail untuk kelemahan CWE/CVE dan beri skor pematuhan automatik.",
+)
 def scan_code(
     body: CodeScanRequest,
     x_api_key: str = Header(..., alias="X-API-Key"),
@@ -554,7 +661,12 @@ def scan_code(
 
 # --- Compliance Score Endpoint ---
 
-@app.get("/portal/compliance/{domain}")
+@app.get(
+    "/portal/compliance/{domain}",
+    tags=["Compliance"],
+    summary="Skor pematuhan domain",
+    description="Dapatkan penilaian keselamatan dan pematuhan bagi domain tertentu berdasarkan log aktiviti dan ancaman yang dikesan.",
+)
 def get_compliance(
     domain: str,
     user_id: str = Depends(verify_jwt),
@@ -586,7 +698,12 @@ def get_compliance(
 
 # --- PDF Report Endpoint ---
 
-@app.post("/portal/report/pdf")
+@app.post(
+    "/portal/report/pdf",
+    tags=["Compliance"],
+    summary="Hasilkan laporan PDF audit",
+    description="Buat laporan audit keselamatan dalam format PDF untuk dokumen pematuhan dan penilaian pihak ketiga.",
+)
 def generate_pdf_report(
     body: CodeScanRequest,
     user_id: str = Depends(verify_jwt),
@@ -626,7 +743,13 @@ class UpdateRequest(BaseModel):
     update_models: bool = True
 
 
-@app.post("/admin/update")
+@app.post(
+    "/admin/update",
+    tags=["Admin"],
+    summary="Kemas kini enjin keselamatan",
+    description="Perbaharui peraturan atau model ML TrustGuard AI untuk mengekalkan ketepatan dan perlindungan terhadap ancaman terbaru.
+",
+)
 def update_engine(
     body: UpdateRequest,
     user_id: str = Depends(verify_jwt),
@@ -647,7 +770,13 @@ def update_engine(
 
 # --- Health Check ---
 
-@app.get("/health")
+@app.get(
+    "/health",
+    tags=["Health"],
+    summary="Semak kesihatan servis",
+    description="Semak status TrustGuard AI, sama ada enjin beroperasi, dan versi aplikasi yang sedang berjalan.
+",
+)
 def health():
     return {
         "status": "ok",
