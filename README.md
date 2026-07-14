@@ -1,46 +1,46 @@
 # TrustGuard v2.0 — Enterprise AI Security Gateway
 
-> Sistem keselamatan berpusat untuk melindungi model LLM dan aplikasi AI daripada serangan siber, prompt injection, jailbreak, dan kelemahan kod.
+> A centralised security layer protecting LLM models and AI applications from cyber attacks, prompt injection, jailbreak, and code vulnerabilities.
 
 ---
 
-## Objektif
+## Objective
 
-TrustGuard dibina untuk menjawab keperluan keselamatan AI yang semakin kritikal di Malaysia dan global. Platform ini bertindak sebagai **lapisan pertahanan berpusat** antara pengguna dan model AI, memastikan setiap interaksi diimbas, dilog, dan dinilai mengikut standard keselamatan antarabangsa dan tempatan.
+TrustGuard is built to address the increasingly critical AI security needs in Malaysia and globally. The platform acts as a **centralised defence layer** between users and AI models, ensuring every interaction is scanned, logged, and evaluated against international and local security standards.
 
-**Matlamat utama:**
-- Melindungi model LLM daripada Prompt Injection & Jailbreak (OWASP LLM Top 10)
-- Mengesan kelemahan CVE/CWE dalam kod sumber yang dijanakan oleh AI
-- Memastikan pematuhan kepada perundangan Malaysia (JPDP, NACSA, MCMC, AIGE)
-- Menyediakan laporan audit keselamatan yang boleh dikemukakan kepada pihak berkuasa
+**Key objectives:**
+- Protect LLM models from Prompt Injection & Jailbreak (OWASP LLM Top 10)
+- Detect CVE/CWE vulnerabilities in AI-generated source code
+- Ensure compliance with Malaysian regulations (JPDP, NACSA, MCMC, AIGE)
+- Provide audit security reports submittable to authorities
 
 ---
 
-## Maklumat Pembangunan
+## Development Info
 
-| Perkara | Butiran |
+| Field | Details |
 |---|---|
-| Versi | 2.0.0 |
-| Bahasa Backend | Python 3.12 |
+| Version | 2.0.0 |
+| Backend Language | Python 3.12 |
 | Framework | FastAPI |
-| Database | SQLite (boleh migrate ke PostgreSQL) |
+| Database | SQLite (migratable to PostgreSQL) |
 | ML Engine | HuggingFace Transformers |
 | Frontend | HTML + Tailwind CSS |
-| Persekitaran | WSL (Ubuntu) — jalankan dari Linux filesystem |
-| Lokasi Pembangunan | Sungai Buloh, Selangor, Malaysia |
+| Environment | WSL (Ubuntu) — run from Linux filesystem |
+| Development Location | Sungai Buloh, Selangor, Malaysia |
 
 ---
 
-## Komponen Sistem (v2.0 — Clean Architecture)
+## System Components (v2.0 — Clean Architecture)
 
 ```
 JTS/
 ├── backend/
-│   ├── main.py                      # App factory — middleware + routers sahaja
+│   ├── main.py                      # App factory — middleware + routers only
 │   ├── requirements.txt
-│   ├── .env                         # Konfigurasi persekitaran (JANGAN commit)
+│   ├── .env                         # Environment config (DO NOT commit)
 │   ├── config/
-│   │   ├── settings.py              # Pydantic BaseSettings — semua config dari .env
+│   │   ├── settings.py              # Pydantic BaseSettings — all config from .env
 │   │   └── constants.py             # Enums: AttackType, ErrorCode (TG-XXXX), Severity
 │   ├── models/
 │   │   ├── base.py                  # DeclarativeBase, TimestampMixin, UUIDPrimaryKeyMixin
@@ -53,8 +53,8 @@ JTS/
 │   │   ├── gateway.py               # ShieldRequest, ResponseFirewallRequest
 │   │   └── scan.py                  # CodeScanRequest, RepoScanRequest, UrlScanRequest
 │   ├── services/
-│   │   ├── auth_service.py          # AuthService — tiada FastAPI dependency
-│   │   ├── shield_service.py        # ShieldService dengan TTLCache
+│   │   ├── auth_service.py          # AuthService — no FastAPI dependency
+│   │   ├── shield_service.py        # ShieldService with TTLCache
 │   │   └── api_key_service.py       # ApiKeyService
 │   ├── repositories/
 │   │   ├── user_repo.py
@@ -66,7 +66,7 @@ JTS/
 │   │   ├── rate_limit.py            # Sliding window per-IP
 │   │   └── audit_log.py             # JSON structured logging
 │   ├── engines/
-│   │   ├── rule_engine.py           # Rule-based (39 pattern OWASP)
+│   │   ├── rule_engine.py           # Rule-based (39 OWASP patterns)
 │   │   ├── ml_engine.py             # HuggingFace ML models
 │   │   └── hybrid_engine.py         # Hybrid (Rule → ML)
 │   ├── scanners/
@@ -96,7 +96,7 @@ JTS/
 │   │   └── scorer.py
 │   ├── reports/
 │   │   └── pdf_generator.py
-│   ├── engine/                      # Legacy (dikekalkan untuk backward compat)
+│   ├── engine/                      # Legacy (kept for backward compatibility)
 │   │   └── updater.py
 │   └── tests/
 │       ├── unit/
@@ -111,32 +111,32 @@ JTS/
 
 ---
 
-## Model AI Digunakan
+## AI Models Used
 
-| Model | Sumber | Fungsi |
+| Model | Source | Function |
 |---|---|---|
-| `deepset/deberta-v3-base-injection` | HuggingFace | Mengesan Prompt Injection |
-| `martin-ha/toxic-comment-model` | HuggingFace | Mengesan kandungan toksik / Jailbreak |
-| Rule-based Regex Engine | Custom | 39 pattern OWASP LLM01/LLM02 |
+| `deepset/deberta-v3-base-injection` | HuggingFace | Detect Prompt Injection |
+| `martin-ha/toxic-comment-model` | HuggingFace | Detect toxic content / Jailbreak |
+| Rule-based Regex Engine | Custom | 39 OWASP LLM01/LLM02 patterns |
 
-Semua model berjalan **sepenuhnya offline** selepas download pertama. Tiada data dihantar ke pihak ketiga.
+All models run **fully offline** after first download. No data is sent to third parties.
 
-> Model cache disimpan di `~/.cache/huggingface/hub/`. Guna endpoint `/admin/update` untuk refresh model ke versi terkini.
+> Model cache is stored at `~/.cache/huggingface/hub/`. Use the `/admin/update` endpoint to refresh models to the latest version.
 
 ---
 
-## Standard & Pematuhan
+## Standards & Compliance
 
-| Standard | Skop |
+| Standard | Scope |
 |---|---|
-| OWASP Top 10 (2021) | Keselamatan aplikasi web |
-| OWASP LLM Top 10 | Keselamatan model AI/LLM |
-| CWE/SANS Top 25 | Kelemahan kod sumber |
-| NACSA AI Security Framework | Keselamatan AI kebangsaan |
-| JPDP / PDPA 2010 | Perlindungan data peribadi |
-| MCMC CMA 1998 | Komunikasi & multimedia |
-| AIGE | Etika AI kebangsaan |
-| MY-AI Standards (SIRIM/JSM) | Standard teknikal AI Malaysia |
+| OWASP Top 10 (2021) | Web application security |
+| OWASP LLM Top 10 | AI/LLM model security |
+| CWE/SANS Top 25 | Source code vulnerabilities |
+| NACSA AI Security Framework | National AI security |
+| JPDP / PDPA 2010 | Personal data protection |
+| MCMC CMA 1998 | Communications & multimedia |
+| AIGE | National AI ethics |
+| MY-AI Standards (SIRIM/JSM) | Malaysian AI technical standards |
 
 ---
 
@@ -147,106 +147,106 @@ Semua model berjalan **sepenuhnya offline** selepas download pertama. Tiada data
 http://localhost:8000
 ```
 
-Dokumentasi interaktif (Swagger UI): `http://localhost:8000/docs`
+Interactive documentation (Swagger UI): `http://localhost:8000/docs`
 
 ---
 
 ### Auth Endpoints
 
 #### `POST /portal/auth/register`
-Daftar akaun pengguna baru. Kata laluan minimum 8 aksara.
+Register a new user account. Password minimum 8 characters.
 
 ```json
 // Request
-{ "email": "user@example.com", "password": "kataLaluan8" }
+{ "email": "user@example.com", "password": "Password8" }
 
 // Response 201
 { "message": "User registered successfully" }
 
-// Response 409 — email sudah didaftarkan
+// Response 409 — email already registered
 { "detail": "Emel user@example.com telah didaftarkan." }
 ```
 
 #### `POST /portal/auth/login`
-Log masuk dan dapatkan JWT token.
+Log in and retrieve JWT tokens.
 
 ```json
 // Request
-{ "email": "user@example.com", "password": "kataLaluan8" }
+{ "email": "user@example.com", "password": "Password8" }
 
 // Response 200
 { "access_token": "eyJ...", "refresh_token": "eyJ...", "token_type": "bearer" }
 
-// Response 401 — kelayakan tidak sah
+// Response 401 — invalid credentials
 { "detail": "Emel atau kata laluan tidak betul." }
 ```
 
 ---
 
-### Portal Endpoints (Memerlukan JWT)
+### Portal Endpoints (Requires JWT)
 
 Header: `Authorization: Bearer <token>`
 
 #### `POST /portal/api-key/generate`
-Jana API Key baru untuk domain. Key dipaparkan **sekali sahaja**.
+Generate a new API Key for a domain. Key is shown **once only**.
 
 ```json
 // Request
-{ "allowed_domain": "lamanweb.com" }
+{ "allowed_domain": "mywebsite.com" }
 
 // Response 201
 {
   "api_key": "aisec_live_xxxxxxxxxxxx",
-  "allowed_domain": "lamanweb.com",
+  "allowed_domain": "mywebsite.com",
   "warning": "Copy this key now. It will NOT be shown again."
 }
 ```
 
 #### `GET /portal/api-keys`
-Senarai semua API key milik pengguna. Return array terus.
+List all API keys owned by the user. Returns array directly.
 
 #### `GET /portal/api-key/{key_id}`
-Semak status API key dan dapatkan arahan domain verification.
+Check API key status and get domain verification instructions.
 
 #### `POST /portal/api-key/{key_id}/verify`
-Verify domain ownership dan trigger auto-scan.
+Verify domain ownership and trigger auto-scan.
 
 ```json
 // Request
 {
-  "target_url": "https://lamanweb.com",
+  "target_url": "https://mywebsite.com",
   "repo_url": "https://github.com/user/repo",
   "branch": "main"
 }
 ```
 
 #### `DELETE /portal/api-key/{key_id}`
-Revoke API key.
+Revoke an API key.
 
 #### `GET /portal/stats`
-Statistik imbasan prompt. Return flat JSON.
+Prompt scan statistics. Returns flat JSON.
 
 ```json
 { "total_requests": 100, "total_blocked": 12, "engine_status": "ACTIVE" }
 ```
 
 #### `GET /portal/logs`
-Log keselamatan real-time (100 terkini). Return array terus.
+Real-time security logs (latest 100). Returns array directly.
 
 #### `GET /portal/compliance/{domain}`
-Skor pematuhan untuk domain tertentu.
+Compliance score for a specific domain.
 
 #### `POST /portal/report/pdf`
-Jana laporan audit PDF.
+Generate a PDF audit report.
 
 ```json
 // Request
-{ "code": "<kod sumber>", "filename": "app.py" }
+{ "code": "<source code>", "filename": "app.py" }
 // Response: PDF file download
 ```
 
 #### `POST /admin/update`
-Kemaskini rule patterns OWASP dan/atau refresh ML models. Memerlukan JWT.
+Update OWASP rule patterns and/or refresh ML models. Requires JWT.
 
 ```json
 // Request
@@ -265,30 +265,30 @@ Kemaskini rule patterns OWASP dan/atau refresh ML models. Memerlukan JWT.
 
 ---
 
-### Public Gateway Endpoints (Memerlukan API Key)
+### Public Gateway Endpoints (Requires API Key)
 
-Header: `X-API-Key: aisec_live_xxx` dan `X-Origin-Domain: domain.com`
+Headers: `X-API-Key: aisec_live_xxx` and `X-Origin-Domain: domain.com`
 
 #### `POST /api/v1/shield`
-Imbas prompt AI untuk ancaman.
+Scan an AI prompt for threats.
 
 ```json
 // Request
-{ "prompt": "teks prompt pengguna" }
+{ "prompt": "user prompt text" }
 
-// Response — Selamat
+// Response — Safe
 { "status": "ALLOWED" }
 
-// Response — Disekat
+// Response — Blocked
 { "status": "BLOCKED", "reason": "PROMPT_INJECTION" }
 ```
 
 #### `POST /api/v1/scan/code`
-Imbas kod sumber untuk CVE/CWE.
+Scan source code for CVE/CWE vulnerabilities.
 
 ```json
 // Request
-{ "code": "<kod sumber>", "filename": "app.py", "engine_mode": "hybrid" }
+{ "code": "<source code>", "filename": "app.py", "engine_mode": "hybrid" }
 
 // Response
 {
@@ -301,34 +301,34 @@ Imbas kod sumber untuk CVE/CWE.
 ```
 
 #### `POST /api/v1/scan/repo`
-Scan keseluruhan repo GitHub untuk CVE/CWE, secrets, dan dependency issues.
+Scan an entire GitHub repository for CVE/CWE, secrets, and dependency issues.
 
 ```json
 // Request
 { "repo_url": "https://github.com/user/repo", "branch": "main" }
 ```
 
-Had: Repo mesti public, saiz < 200MB, < 500 fail.
+Limits: Repository must be public, size < 200MB, < 500 files.
 
 #### `POST /api/v1/scan/url`
-Scan laman web hidup untuk isu keselamatan (DAST asas).
+Scan a live website for security issues (basic DAST).
 
 ```json
 // Request
 { "url": "https://target-website.com" }
 ```
 
-Semakan: Exposed paths, security headers, error leak, CORS, SSL/TLS.
+Checks: Exposed paths, security headers, error leak, CORS, SSL/TLS.
 
 #### `POST /api/v1/scan/upload`
-Upload fail ZIP projek untuk di-scan.
+Upload a ZIP project file for scanning.
 
 ```
 // Request: multipart/form-data
 field: file (ZIP)
 ```
 
-Had: Saiz ZIP < 200MB selepas extract, < 500 fail.
+Limits: ZIP size < 200MB after extraction, < 500 files.
 
 ---
 
@@ -347,54 +347,54 @@ Had: Saiz ZIP < 200MB selepas extract, < 500 fail.
 
 ---
 
-## Cara Pasang & Jalankan
+## Installation & Setup
 
-> **Penting:** Jalankan dari WSL (Linux filesystem), bukan terus dari Windows. SQLite WAL mode tidak berfungsi pada NTFS (`/mnt/c/`).
+> **Important:** Run from WSL (Linux filesystem), not directly from Windows. SQLite WAL mode does not work on NTFS (`/mnt/c/`).
 
 ```bash
-# 1. Buka WSL terminal, masuk direktori
+# 1. Open WSL terminal, navigate to directory
 cd /mnt/c/Users/fahmi/Downloads/JTS/backend
 
-# 2. Buat virtual environment
+# 2. Create virtual environment
 python3 -m venv venv
 source venv/bin/activate
 
 # 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Salin dan edit fail .env
-# JWT_SECRET sudah ada dalam .env — tukar jika perlu
-# DATABASE_URL gunakan path Linux: sqlite:////tmp/trustguard/aisec.db
+# 4. Configure .env
+#    JWT_SECRET is already set — change if needed
+#    Use Linux path for DATABASE_URL: sqlite:////tmp/trustguard/aisec.db
 
-# 5. Jalankan server
+# 5. Run server
 python main.py
 ```
 
-Buka `http://localhost:8000` dalam browser.
+Open `http://localhost:8000` in browser.
 
-### Nota WSL / Windows
+### WSL / Windows Notes
 
-| Isu | Penyelesaian |
+| Issue | Solution |
 |---|---|
-| SQLite WAL error pada `/mnt/c/` | Guna `DATABASE_URL=sqlite:////tmp/trustguard/aisec.db` |
-| Server guna kod lama selepas edit | Delete `__pycache__` dan restart server |
-| Python 3.13 (Windows) vs 3.12 (WSL) | Pastikan jalankan dalam WSL venv |
+| SQLite WAL error on `/mnt/c/` | Use `DATABASE_URL=sqlite:////tmp/trustguard/aisec.db` |
+| Server using old code after edit | Delete `__pycache__` and restart |
+| Python 3.13 (Windows) vs 3.12 (WSL) | Always run inside WSL venv |
 
 ```bash
-# Delete cache jika server guna kod lama
+# Clear cache if server is using old code
 find . -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null
 python main.py
 ```
 
 ---
 
-## Cara Integrasi (Webhook / API)
+## Integration Guide
 
-Sistem luar boleh bersambung dengan 3 langkah:
+External systems can integrate in 3 steps:
 
-1. Daftar akaun di portal → Jana API Key untuk domain anda
-2. Hantar setiap prompt pengguna ke `/api/v1/shield` sebelum diproses oleh model AI
-3. Prompt yang `ALLOWED` sahaja dibenarkan sampai ke model AI anda
+1. Register an account at the portal → Generate an API Key for your domain
+2. Send every user prompt to `/api/v1/shield` before it reaches your AI model
+3. Only `ALLOWED` prompts are forwarded to your AI model
 
 ```python
 import requests
@@ -403,34 +403,34 @@ response = requests.post(
     "http://localhost:8000/api/v1/shield",
     headers={
         "X-API-Key": "aisec_live_xxxx",
-        "X-Origin-Domain": "lamanweb.com"
+        "X-Origin-Domain": "mywebsite.com"
     },
     json={"prompt": user_input}
 )
 
 if response.json()["status"] == "BLOCKED":
-    return "Permintaan anda tidak dapat diproses."
+    return "Your request cannot be processed."
 ```
 
 ---
 
-## Perubahan v2.0 (daripada v1.0)
+## What's New in v2.0
 
-| Bahagian | v1.0 | v2.0 |
+| Area | v1.0 | v2.0 |
 |---|---|---|
-| Struktur | Monolith 700-baris `main.py` | Clean Architecture — config, models, schemas, services, repositories |
-| Auth | Inline dalam `main.py` | `AuthService` berasingan, boleh diuji tanpa FastAPI |
-| Middleware | Tiada | RequestID, SecurityHeaders, RateLimit, AuditLog |
-| Error codes | String rawak | TG-XXXX series (TG-1001 hingga TG-9001) |
-| Database | SQLite sahaja | SQLite + PostgreSQL, WAL mode, auto-migration |
-| Tests | Tiada | 63 tests — unit, auth, security |
-| Password validator | Tiada had jelas | Minimum 8 aksara (validator huruf besar dibuang) |
-| Response format | Tidak konsisten | Flat JSON untuk semua portal endpoints (backward compatible) |
+| Structure | 700-line monolith `main.py` | Clean Architecture — config, models, schemas, services, repositories |
+| Auth | Inline in `main.py` | Separate `AuthService`, testable without FastAPI |
+| Middleware | None | RequestID, SecurityHeaders, RateLimit, AuditLog |
+| Error codes | Random strings | TG-XXXX series (TG-1001 to TG-9001) |
+| Database | SQLite only | SQLite + PostgreSQL, WAL mode, auto-migration |
+| Tests | None | 63 tests — unit, auth, security |
+| Password validation | No clear limit | Minimum 8 characters |
+| Response format | Inconsistent | Flat JSON for all portal endpoints (backward compatible) |
 
 ---
 
-## Lesen & Kredit
+## License & Credits
 
-Dibina dengan penuh semangat dari **Sungai Buloh, Selangor, Malaysia**.
+Built with passion from **Sungai Buloh, Selangor, Malaysia**.
 
-Rujukan standard: OWASP, NACSA, JPDP, MCMC, AIGE, MY-AI Standards (SIRIM/JSM).
+Standards reference: OWASP, NACSA, JPDP, MCMC, AIGE, MY-AI Standards (SIRIM/JSM).

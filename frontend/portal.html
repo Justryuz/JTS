@@ -1,10 +1,19 @@
 <!DOCTYPE html>
-<html lang="ms">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrustGuard — Dashboard</title>
+    <title>TrustGuard — Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .tool-tab { color: #94a3b8; background: transparent; border-bottom: 2px solid transparent; transition: all .15s; }
+        .tool-tab:hover { color: #e2e8f0; }
+        .active-tab { color: #818cf8; border-bottom-color: #818cf8; background: rgba(99,102,241,.08); }
+    </style>
+    <style>
+        #langDropdown { display: none; }
+        #langDropdown.open { display: block; }
+    </style>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐛</text></svg>">
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
@@ -54,7 +63,23 @@
             </div>
             <div class="flex items-center gap-4">
                 <span id="navEmail" class="text-sm text-slate-400"></span>
-                <button onclick="doLogout()" class="text-xs text-slate-500 hover:text-rose-400 transition-colors">Log Keluar</button>
+                <!-- Language Switcher -->
+                <div class="relative">
+                    <button onclick="toggleLangMenu()" class="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg transition-colors">
+                        <span id="langFlag">🇬🇧</span>
+                        <span id="langLabel">EN</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div id="langDropdown" class="absolute right-0 mt-1 w-36 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden">
+                        <button onclick="setLang('en')" class="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-slate-700 transition-colors">
+                            <span>🇬🇧</span> English
+                        </button>
+                        <button onclick="setLang('ms')" class="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-slate-700 transition-colors">
+                            <span>🇲🇾</span> Bahasa Malaysia
+                        </button>
+                    </div>
+                </div>
+                <button onclick="doLogout()" id="btnLogout" class="text-xs text-slate-500 hover:text-rose-400 transition-colors">Logout</button>
             </div>
         </div>
     </nav>
@@ -161,36 +186,132 @@
             </div>
         </section>
 
+        <!-- SECURITY TOOLS -->
+        <section class="bg-slate-800/40 border border-slate-800 rounded-xl overflow-hidden">
+            <div class="p-6 border-b border-slate-800">
+                <h2 class="text-xl font-bold text-white">Security Tools</h2>
+                <p class="text-sm text-slate-400">Test shield, imbas kod, repo, URL, atau upload projek ZIP menggunakan API Key anda.</p>
+            </div>
+
+            <!-- API KEY SELECTOR -->
+            <div class="px-6 pt-4 pb-2 flex flex-col sm:flex-row gap-3 items-start sm:items-center border-b border-slate-800">
+                <label class="text-xs text-slate-400 whitespace-nowrap">API Key:</label>
+                <select id="toolApiKey" class="flex-1 max-w-sm bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500">
+                    <option value="">— Pilih API Key —</option>
+                </select>
+                <label class="text-xs text-slate-400 whitespace-nowrap">Domain:</label>
+                <select id="toolDomain" class="flex-1 max-w-sm bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500">
+                    <option value="">— Pilih Domain —</option>
+                </select>
+            </div>
+
+            <!-- TABS -->
+            <div class="flex gap-1 px-6 pt-4 border-b border-slate-800 overflow-x-auto">
+                <button onclick="switchTab('shield')" id="tab-shield" class="tool-tab active-tab px-4 py-2 text-xs font-semibold rounded-t-lg whitespace-nowrap">🛡️ Shield Test</button>
+                <button onclick="switchTab('code')" id="tab-code" class="tool-tab px-4 py-2 text-xs font-semibold rounded-t-lg whitespace-nowrap">📄 Scan Kod</button>
+                <button onclick="switchTab('repo')" id="tab-repo" class="tool-tab px-4 py-2 text-xs font-semibold rounded-t-lg whitespace-nowrap">🐙 Scan Repo</button>
+                <button onclick="switchTab('url')" id="tab-url" class="tool-tab px-4 py-2 text-xs font-semibold rounded-t-lg whitespace-nowrap">🌐 Scan URL</button>
+                <button onclick="switchTab('upload')" id="tab-upload" class="tool-tab px-4 py-2 text-xs font-semibold rounded-t-lg whitespace-nowrap">📦 Upload ZIP</button>
+            </div>
+
+            <!-- TAB: SHIELD -->
+            <div id="panel-shield" class="tool-panel p-6 space-y-4">
+                <p class="text-xs text-slate-400">Uji sama ada prompt akan disekat atau dibenarkan oleh enjin TrustGuard.</p>
+                <textarea id="shieldPrompt" rows="4" placeholder="Masukkan prompt untuk diuji..."
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 placeholder:text-slate-600 resize-none"></textarea>
+                <button onclick="runShield()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors">Uji Prompt</button>
+                <div id="shieldResult" class="hidden"></div>
+            </div>
+
+            <!-- TAB: SCAN KOD -->
+            <div id="panel-code" class="tool-panel hidden p-6 space-y-4">
+                <p class="text-xs text-slate-400">Imbas kod sumber untuk CVE/CWE, secrets, dan isu keselamatan.</p>
+                <div class="flex gap-3">
+                    <input id="codeFilename" type="text" placeholder="nama_fail.py" value="code.py"
+                        class="w-48 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500">
+                    <select id="codeEngine" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500">
+                        <option value="hybrid">Hybrid (Rule + ML)</option>
+                        <option value="rule">Rule-based</option>
+                        <option value="ml">ML Only</option>
+                    </select>
+                </div>
+                <textarea id="codeInput" rows="10" placeholder="Tampal kod sumber di sini..."
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 text-xs font-mono focus:outline-none focus:border-indigo-500 placeholder:text-slate-600 resize-none"></textarea>
+                <button onclick="runCodeScan()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors">Imbas Kod</button>
+                <div id="codeResult" class="hidden"></div>
+            </div>
+
+            <!-- TAB: SCAN REPO -->
+            <div id="panel-repo" class="tool-panel hidden p-6 space-y-4">
+                <p class="text-xs text-slate-400">Imbas keseluruhan repo GitHub (public) untuk CVE/CWE, secrets, dan dependency issues.</p>
+                <div class="flex flex-col sm:flex-row gap-3 max-w-2xl">
+                    <input id="repoUrl" type="text" placeholder="https://github.com/user/repo"
+                        class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
+                    <input id="repoBranch" type="text" placeholder="main" value="main"
+                        class="w-28 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
+                    <button onclick="runRepoScan()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">Imbas Repo</button>
+                </div>
+                <p class="text-xs text-slate-600">Had: repo public, saiz &lt; 200MB, &lt; 500 fail.</p>
+                <div id="repoResult" class="hidden"></div>
+            </div>
+
+            <!-- TAB: SCAN URL -->
+            <div id="panel-url" class="tool-panel hidden p-6 space-y-4">
+                <p class="text-xs text-slate-400">Imbas laman web hidup — semak security headers, exposed paths, CORS, SSL/TLS, dan error leak.</p>
+                <div class="flex flex-col sm:flex-row gap-3 max-w-2xl">
+                    <input id="urlInput" type="text" placeholder="https://target-website.com"
+                        class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
+                    <button onclick="runUrlScan()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">Imbas URL</button>
+                </div>
+                <div id="urlResult" class="hidden"></div>
+            </div>
+
+            <!-- TAB: UPLOAD ZIP -->
+            <div id="panel-upload" class="tool-panel hidden p-6 space-y-4">
+                <p class="text-xs text-slate-400">Upload fail ZIP projek untuk diimbas. Had: &lt; 200MB selepas extract, &lt; 500 fail.</p>
+                <div class="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center space-y-3 hover:border-indigo-600 transition-colors">
+                    <p class="text-slate-400 text-sm">Seret fail ZIP ke sini atau</p>
+                    <label class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors inline-block">
+                        Pilih Fail ZIP
+                        <input type="file" id="zipFile" accept=".zip" class="hidden" onchange="updateZipLabel()">
+                    </label>
+                    <p id="zipLabel" class="text-xs text-slate-500">Tiada fail dipilih</p>
+                </div>
+                <button onclick="runUploadScan()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors">Muat Naik & Imbas</button>
+                <div id="uploadResult" class="hidden"></div>
+            </div>
+        </section>
+
         <!-- SECURITY LOGS -->
         <section class="bg-slate-800/40 border border-slate-800 rounded-xl overflow-hidden">
             <div class="p-6 border-b border-slate-800 flex items-center justify-between">
                 <div>
-                    <h2 class="text-xl font-bold text-white">Log Pemantauan Keselamatan Real-Time</h2>
-                    <p class="text-sm text-slate-400">Analisis terperinci mengenai cubaan eksploitasi model AI.</p>
+                    <h2 class="text-xl font-bold text-white" data-i18n="logsTitle">Real-Time Security Monitoring Log</h2>
+                    <p class="text-sm text-slate-400" data-i18n="logsDesc">Detailed analysis of AI model exploitation attempts.</p>
                 </div>
-                <button onclick="loadLogs()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg transition-colors">↻ Muat Semula</button>
+                <button onclick="loadLogs()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg transition-colors" data-i18n="btnRefresh">↻ Refresh</button>
             </div>
             <!-- ENGINE UPDATE -->
             <div class="p-6 border-b border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h2 class="text-xl font-bold text-white">Kemaskini Enjin Pengesanan</h2>
-                    <p class="text-sm text-slate-400">Update rule patterns OWASP terkini & refresh model ML dari HuggingFace.</p>
+                    <h2 class="text-xl font-bold text-white" data-i18n="engineTitle">Detection Engine Update</h2>
+                    <p class="text-sm text-slate-400" data-i18n="engineDesc">Update latest OWASP rule patterns &amp; refresh ML models from HuggingFace.</p>
                 </div>
                 <div class="flex gap-3">
-                    <button onclick="updateEngine(true, false)" class="text-xs bg-indigo-700 hover:bg-indigo-600 px-4 py-2 rounded-lg transition-colors font-medium">↑ Update Rules</button>
-                    <button onclick="updateEngine(false, true)" class="text-xs bg-violet-700 hover:bg-violet-600 px-4 py-2 rounded-lg transition-colors font-medium">↑ Refresh Models</button>
-                    <button onclick="updateEngine(true, true)" class="text-xs bg-emerald-700 hover:bg-emerald-600 px-4 py-2 rounded-lg transition-colors font-medium">↑ Update Semua</button>
+                    <button onclick="updateEngine(true, false)" class="text-xs bg-indigo-700 hover:bg-indigo-600 px-4 py-2 rounded-lg transition-colors font-medium" data-i18n="btnUpdateRules">↑ Update Rules</button>
+                    <button onclick="updateEngine(false, true)" class="text-xs bg-violet-700 hover:bg-violet-600 px-4 py-2 rounded-lg transition-colors font-medium" data-i18n="btnRefreshModels">↑ Refresh Models</button>
+                    <button onclick="updateEngine(true, true)" class="text-xs bg-emerald-700 hover:bg-emerald-600 px-4 py-2 rounded-lg transition-colors font-medium" data-i18n="btnUpdateAll">↑ Update All</button>
                 </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-sm">
                     <thead>
                         <tr class="bg-slate-900/60 text-slate-400 border-b border-slate-800">
-                            <th class="p-4 font-medium">Masa/Tarikh</th>
-                            <th class="p-4 font-medium">Domain Asal</th>
-                            <th class="p-4 font-medium">Teks Prompt Input</th>
-                            <th class="p-4 font-medium">Jenis Serangan</th>
-                            <th class="p-4 font-medium">Tindakan</th>
+                            <th class="p-4 font-medium" data-i18n="logThTime">Time/Date</th>
+                            <th class="p-4 font-medium" data-i18n="logThDomain">Origin Domain</th>
+                            <th class="p-4 font-medium" data-i18n="logThPrompt">Prompt Input Text</th>
+                            <th class="p-4 font-medium" data-i18n="logThType">Attack Type</th>
+                            <th class="p-4 font-medium" data-i18n="logThAction">Action</th>
                         </tr>
                     </thead>
                     <tbody id="logsTableBody" class="divide-y divide-slate-800/60 text-slate-300">
@@ -212,6 +333,177 @@
 
 <script>
     const API = '';
+
+    // ── i18n ─────────────────────────────────────────────────────
+    const LANG = {
+        en: {
+            loginSubtitle: 'Login or register a new account',
+            btnLogin: 'Login', btnRegister: 'Register',
+            passwordPlaceholder: 'Password',
+            backHome: '← Back to home',
+            btnLogout: 'Logout',
+            statTotalLabel: 'Total Prompt Scans', statTotalSub: 'Overall total',
+            statBlockedLabel: 'Threats Detected & Blocked',
+            statEngineLabel: 'AI Guard Engine Status', statEngineVal: 'Active & Secure',
+            statRatePrefix: 'Threat rate: ',
+            apiKeyTitle: 'API Key & Domain Management',
+            apiKeyDesc: 'Register your application domain to generate an API Key. The engine only accepts requests from verified domains.',
+            btnGenKey: 'Generate New API Key',
+            keyCopyTitle: 'Copy Your API Key Now!',
+            keyCopyDesc: 'This key is hashed in the database and <strong>WILL NOT BE SHOWN AGAIN</strong> after you close this page.',
+            btnCopy: 'Copy',
+            activeKeysTitle: 'Active API Keys',
+            thDomain: 'Domain', thStatus: 'Status', thCreated: 'Created', thAction: 'Action',
+            keyActive: 'ACTIVE', keyRevoked: 'REVOKED', btnRevoke: 'Revoke',
+            toolsTitle: 'Security Tools',
+            toolsDesc: 'Test shield, scan code, repo, URL, or upload a ZIP project using your API Key.',
+            toolApiKeyLabel: 'API Key:', toolDomainLabel: 'Domain:',
+            toolApiKeyDefault: '— Select API Key —', toolDomainDefault: '— Select Domain —',
+            tabShield: 'Shield Test', tabCode: 'Scan Code', tabRepo: 'Scan Repo', tabUrl: 'Scan URL', tabUpload: 'Upload ZIP',
+            shieldDesc: 'Test whether a prompt will be blocked or allowed by the TrustGuard engine.',
+            shieldPlaceholder: 'Enter prompt to test...',
+            btnShield: 'Test Prompt', btnScanning: 'Scanning...',
+            codeDesc: 'Scan source code for CVE/CWE, secrets, and security issues.',
+            codePlaceholder: 'Paste source code here...',
+            btnScanCode: 'Scan Code',
+            repoDesc: 'Scan an entire public GitHub repo for CVE/CWE, secrets, and dependency issues.',
+            btnScanRepo: 'Scan Repo',
+            repoLimit: 'Limit: public repo, size < 200MB, < 500 files.',
+            urlDesc: 'Scan a live website — check security headers, exposed paths, CORS, SSL/TLS, and error leaks.',
+            btnScanUrl: 'Scan URL',
+            uploadDesc: 'Upload a ZIP project file to scan. Limit: < 200MB after extraction, < 500 files.',
+            uploadDrag: 'Drag ZIP file here or', btnPickFile: 'Choose ZIP File',
+            noFileChosen: 'No file chosen', btnUploadScan: 'Upload & Scan', btnUploading: 'Uploading...',
+            logsTitle: 'Real-Time Security Monitoring Log',
+            logsDesc: 'Detailed analysis of AI model exploitation attempts.',
+            btnRefresh: '↻ Refresh',
+            engineTitle: 'Detection Engine Update',
+            engineDesc: 'Update latest OWASP rule patterns & refresh ML models from HuggingFace.',
+            btnUpdateRules: '↑ Update Rules', btnRefreshModels: '↑ Refresh Models', btnUpdateAll: '↑ Update All',
+            logThTime: 'Time/Date', logThDomain: 'Origin Domain', logThPrompt: 'Prompt Input Text',
+            logThType: 'Attack Type', logThAction: 'Action',
+            logsEmpty: 'No logs yet. Send a request via /api/v1/shield to see logs.',
+            alertSelectKey: 'Please select an API Key and Domain first.',
+            alertEnterPrompt: 'Please enter a prompt.',
+            alertEnterCode: 'Please enter code.',
+            alertEnterRepo: 'Please enter a repo URL.',
+            alertEnterUrl: 'Please enter a URL.',
+            alertPickZip: 'Please select a ZIP file.',
+            alertKeyCopied: 'API Key copied! Store it somewhere safe.',
+            alertRevokeConfirm: 'Revoke this key? This action cannot be undone.',
+            engineUpdated: 'Rules updated', modelsRefreshed: 'Models refreshed', engineErrors: 'Errors',
+            engineNote: 'Models will re-download on next scan request.',
+            shieldAllowed: 'ALLOWED — Prompt is safe.',
+            shieldBlocked: 'BLOCKED', shieldReason: 'Reason: ',
+            scanNoIssues: 'No issues found.',
+            scanTotalIssues: 'Total Issues', scanMore: '... and {n} more issues.',
+            complianceScore: 'Compliance Score: ',
+        },
+        ms: {
+            loginSubtitle: 'Log masuk atau daftar akaun baru',
+            btnLogin: 'Log Masuk', btnRegister: 'Daftar',
+            passwordPlaceholder: 'Kata Laluan',
+            backHome: '← Kembali ke laman utama',
+            btnLogout: 'Log Keluar',
+            statTotalLabel: 'Jumlah Imbasan Prompt', statTotalSub: 'Jumlah keseluruhan',
+            statBlockedLabel: 'Ancaman Dikesan & Disekat',
+            statEngineLabel: 'Status AI Guard Engine', statEngineVal: 'Aktif & Selamat',
+            statRatePrefix: 'Kadar ancaman: ',
+            apiKeyTitle: 'Pengurusan Kunci API & Domain',
+            apiKeyDesc: 'Daftarkan domain aplikasi/CMS anda untuk menjana API Key. Enjin hanya menerima permintaan dari domain yang disahkan.',
+            btnGenKey: 'Jana API Key Baru',
+            keyCopyTitle: 'Salin API Key Anda Sekarang!',
+            keyCopyDesc: 'Kunci ini di-hash di pangkalan data dan <strong>TIDAK AKAN DIPAPARKAN LAGI</strong> selepas anda menutup halaman ini.',
+            btnCopy: 'Salin',
+            activeKeysTitle: 'Kunci API Aktif',
+            thDomain: 'Domain', thStatus: 'Status', thCreated: 'Dicipta', thAction: 'Tindakan',
+            keyActive: 'AKTIF', keyRevoked: 'DIREVOKE', btnRevoke: 'Revoke',
+            toolsTitle: 'Alat Keselamatan',
+            toolsDesc: 'Uji shield, imbas kod, repo, URL, atau muat naik projek ZIP menggunakan API Key anda.',
+            toolApiKeyLabel: 'API Key:', toolDomainLabel: 'Domain:',
+            toolApiKeyDefault: '— Pilih API Key —', toolDomainDefault: '— Pilih Domain —',
+            tabShield: 'Uji Shield', tabCode: 'Imbas Kod', tabRepo: 'Imbas Repo', tabUrl: 'Imbas URL', tabUpload: 'Muat Naik ZIP',
+            shieldDesc: 'Uji sama ada prompt akan disekat atau dibenarkan oleh enjin TrustGuard.',
+            shieldPlaceholder: 'Masukkan prompt untuk diuji...',
+            btnShield: 'Uji Prompt', btnScanning: 'Mengimbas...',
+            codeDesc: 'Imbas kod sumber untuk CVE/CWE, secrets, dan isu keselamatan.',
+            codePlaceholder: 'Tampal kod sumber di sini...',
+            btnScanCode: 'Imbas Kod',
+            repoDesc: 'Imbas keseluruhan repo GitHub (awam) untuk CVE/CWE, secrets, dan isu dependency.',
+            btnScanRepo: 'Imbas Repo',
+            repoLimit: 'Had: repo awam, saiz < 200MB, < 500 fail.',
+            urlDesc: 'Imbas laman web hidup — semak security headers, laluan terdedah, CORS, SSL/TLS, dan kebocoran ralat.',
+            btnScanUrl: 'Imbas URL',
+            uploadDesc: 'Muat naik fail ZIP projek untuk diimbas. Had: < 200MB selepas ekstrak, < 500 fail.',
+            uploadDrag: 'Seret fail ZIP ke sini atau', btnPickFile: 'Pilih Fail ZIP',
+            noFileChosen: 'Tiada fail dipilih', btnUploadScan: 'Muat Naik & Imbas', btnUploading: 'Memuat naik...',
+            logsTitle: 'Log Pemantauan Keselamatan Masa Nyata',
+            logsDesc: 'Analisis terperinci mengenai cubaan eksploitasi model AI.',
+            btnRefresh: '↻ Muat Semula',
+            engineTitle: 'Kemaskini Enjin Pengesanan',
+            engineDesc: 'Kemaskini pattern peraturan OWASP terkini & refresh model ML dari HuggingFace.',
+            btnUpdateRules: '↑ Kemaskini Peraturan', btnRefreshModels: '↑ Refresh Model', btnUpdateAll: '↑ Kemaskini Semua',
+            logThTime: 'Masa/Tarikh', logThDomain: 'Domain Asal', logThPrompt: 'Teks Prompt Input',
+            logThType: 'Jenis Serangan', logThAction: 'Tindakan',
+            logsEmpty: 'Tiada log lagi. Hantar permintaan melalui /api/v1/shield untuk melihat log.',
+            alertSelectKey: 'Sila pilih API Key dan Domain dahulu.',
+            alertEnterPrompt: 'Masukkan prompt dahulu.',
+            alertEnterCode: 'Masukkan kod dahulu.',
+            alertEnterRepo: 'Masukkan URL repo dahulu.',
+            alertEnterUrl: 'Masukkan URL dahulu.',
+            alertPickZip: 'Pilih fail ZIP dahulu.',
+            alertKeyCopied: 'Kunci API berjaya disalin! Simpan di tempat selamat.',
+            alertRevokeConfirm: 'Revoke kunci ini? Tindakan tidak boleh dibatalkan.',
+            engineUpdated: 'Peraturan dikemaskini', modelsRefreshed: 'Model di-refresh', engineErrors: 'Ralat',
+            engineNote: 'Model akan dimuat turun semula pada permintaan imbasan seterusnya.',
+            shieldAllowed: 'ALLOWED — Prompt selamat.',
+            shieldBlocked: 'BLOCKED', shieldReason: 'Sebab: ',
+            scanNoIssues: 'Tiada isu ditemui.',
+            scanTotalIssues: 'Jumlah Isu', scanMore: '... dan {n} isu lagi.',
+            complianceScore: 'Skor Pematuhan: ',
+        }
+    };
+
+    let currentLang = localStorage.getItem('tg_lang') || 'en';
+
+    function t(key) { return LANG[currentLang][key] || LANG.en[key] || key; }
+
+    function applyLang() {
+        document.documentElement.lang = currentLang;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.dataset.i18n;
+            if (LANG[currentLang][key] !== undefined) el.innerHTML = LANG[currentLang][key];
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.dataset.i18nPlaceholder;
+            if (LANG[currentLang][key]) el.placeholder = LANG[currentLang][key];
+        });
+        // Update dropdown selectors default options
+        const keyEl = document.getElementById('toolApiKey');
+        const domEl = document.getElementById('toolDomain');
+        if (keyEl && keyEl.options[0]) keyEl.options[0].text = t('toolApiKeyDefault');
+        if (domEl && domEl.options[0]) domEl.options[0].text = t('toolDomainDefault');
+        // Update lang button
+        document.getElementById('langFlag').textContent = currentLang === 'en' ? '🇬🇧' : '🇲🇾';
+        document.getElementById('langLabel').textContent = currentLang === 'en' ? 'EN' : 'MY';
+    }
+
+    function setLang(lang) {
+        currentLang = lang;
+        localStorage.setItem('tg_lang', lang);
+        applyLang();
+        document.getElementById('langDropdown').classList.remove('open');
+    }
+
+    function toggleLangMenu() {
+        document.getElementById('langDropdown').classList.toggle('open');
+    }
+
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.relative')) {
+            document.getElementById('langDropdown')?.classList.remove('open');
+        }
+    });
 
     function parseDetail(detail, fallback) {
         if (!detail) return fallback;
@@ -305,6 +597,7 @@
         const res = await fetch(`${API}/portal/api-keys`, { headers: authHeaders() });
         if (!res.ok) return;
         const keys = await res.json();
+        populateToolSelectors(keys);
         if (keys.length === 0) { document.getElementById('keysTableWrap').classList.add('hidden'); return; }
         document.getElementById('keysTableWrap').classList.remove('hidden');
         document.getElementById('keysTableBody').innerHTML = keys.map(k => `
@@ -365,6 +658,182 @@
             '\nModels akan re-download semasa scan seterusnya.'
         ].filter(Boolean).join('\n');
         alert(msg);
+    }
+
+    // ── Security Tools ─────────────────────────────────────────────────────
+
+    function switchTab(name) {
+        ['shield','code','repo','url','upload'].forEach(t => {
+            document.getElementById('panel-' + t).classList.add('hidden');
+            document.getElementById('tab-' + t).classList.remove('active-tab');
+        });
+        document.getElementById('panel-' + name).classList.remove('hidden');
+        document.getElementById('tab-' + name).classList.add('active-tab');
+    }
+
+    function getToolHeaders() {
+        const key = document.getElementById('toolApiKey').value;
+        const domain = document.getElementById('toolDomain').value;
+        if (!key || !domain) { alert('Sila pilih API Key dan Domain dahulu.'); return null; }
+        return { 'X-API-Key': key, 'X-Origin-Domain': domain };
+    }
+
+    function populateToolSelectors(keys) {
+        const keyEl = document.getElementById('toolApiKey');
+        const domEl = document.getElementById('toolDomain');
+        const active = keys.filter(k => k.is_active);
+        keyEl.innerHTML = '<option value="">— Pilih API Key —</option>' +
+            active.map(k => `<option value="${k.id}" data-domain="${k.allowed_domain}">${k.allowed_domain} (${k.id.slice(0,8)}…)</option>`).join('');
+        domEl.innerHTML = '<option value="">— Pilih Domain —</option>' +
+            active.map(k => `<option value="${k.allowed_domain}">${k.allowed_domain}</option>`).join('');
+        keyEl.addEventListener('change', () => {
+            const opt = keyEl.selectedOptions[0];
+            if (opt && opt.dataset.domain) domEl.value = opt.dataset.domain;
+        });
+    }
+
+    function showScanResult(elId, data) {
+        const el = document.getElementById(elId);
+        el.classList.remove('hidden');
+        el.innerHTML = renderScanResult(data);
+    }
+
+    function renderScanResult(d) {
+        if (d.status === 'ALLOWED') return `<div class="bg-emerald-950/40 border border-emerald-800 rounded-lg p-4 text-emerald-400 font-semibold">✅ ALLOWED — Prompt selamat.</div>`;
+        if (d.status === 'BLOCKED') return `<div class="bg-rose-950/40 border border-rose-800 rounded-lg p-4 space-y-1"><p class="text-rose-400 font-semibold">🚫 BLOCKED</p><p class="text-xs text-rose-300">Sebab: ${d.reason || d.attack_type || '—'}</p></div>`;
+
+        const total = d.total_issues ?? 0;
+        const sb = d.severity_breakdown || {};
+        const score = d.compliance_score || {};
+        const vulns = d.vulnerabilities || d.issues || [];
+
+        let html = `<div class="space-y-4">`;
+
+        // Summary bar
+        html += `<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-slate-900 border border-slate-700 rounded-lg p-3 text-center"><p class="text-2xl font-bold text-white">${total}</p><p class="text-xs text-slate-400">Jumlah Isu</p></div>
+            <div class="bg-rose-950/30 border border-rose-900 rounded-lg p-3 text-center"><p class="text-2xl font-bold text-rose-400">${sb.critical ?? 0}</p><p class="text-xs text-slate-400">Critical</p></div>
+            <div class="bg-orange-950/30 border border-orange-900 rounded-lg p-3 text-center"><p class="text-2xl font-bold text-orange-400">${sb.high ?? 0}</p><p class="text-xs text-slate-400">High</p></div>
+            <div class="bg-yellow-950/30 border border-yellow-900 rounded-lg p-3 text-center"><p class="text-2xl font-bold text-yellow-400">${(sb.medium ?? 0) + (sb.low ?? 0)}</p><p class="text-xs text-slate-400">Med/Low</p></div>
+        </div>`;
+
+        if (score.overall !== undefined) {
+            const grade = score.grade || '—';
+            const gradeColor = grade === 'A' ? 'text-emerald-400' : grade === 'B' ? 'text-blue-400' : grade === 'C' ? 'text-yellow-400' : 'text-rose-400';
+            html += `<div class="bg-slate-900 border border-slate-700 rounded-lg p-3 flex items-center gap-4">
+                <span class="text-3xl font-black ${gradeColor}">${grade}</span>
+                <div><p class="text-sm text-white font-semibold">Skor Pematuhan: ${score.overall}%</p><p class="text-xs text-slate-400">Compliance Score</p></div>
+            </div>`;
+        }
+
+        if (vulns.length > 0) {
+            const sevColor = s => s === 'CRITICAL' ? 'bg-rose-950 text-rose-400 border-rose-900' : s === 'HIGH' ? 'bg-orange-950 text-orange-400 border-orange-900' : s === 'MEDIUM' ? 'bg-yellow-950 text-yellow-400 border-yellow-900' : 'bg-slate-800 text-slate-400 border-slate-700';
+            html += `<div class="space-y-2">`;
+            vulns.slice(0, 20).forEach(v => {
+                html += `<div class="bg-slate-900/60 border border-slate-800 rounded-lg p-3 space-y-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="px-2 py-0.5 text-xs font-bold rounded border ${sevColor(v.severity)}">${v.severity}</span>
+                        <span class="text-sm text-white font-medium">${escHtml(v.title || v.type || '—')}</span>
+                        ${v.file ? `<span class="text-xs text-slate-500 font-mono">${escHtml(v.file)}</span>` : ''}
+                    </div>
+                    ${v.description ? `<p class="text-xs text-slate-400">${escHtml(v.description)}</p>` : ''}
+                    ${v.recommendation ? `<p class="text-xs text-indigo-400">💡 ${escHtml(v.recommendation)}</p>` : ''}
+                </div>`;
+            });
+            if (vulns.length > 20) html += `<p class="text-xs text-slate-500 text-center">... dan ${vulns.length - 20} isu lagi.</p>`;
+            html += `</div>`;
+        } else if (total === 0) {
+            html += `<div class="bg-emerald-950/30 border border-emerald-800 rounded-lg p-4 text-emerald-400 text-sm">✅ Tiada isu ditemui.</div>`;
+        }
+
+        html += `</div>`;
+        return html;
+    }
+
+    async function runShield() {
+        const h = getToolHeaders(); if (!h) return;
+        const prompt = document.getElementById('shieldPrompt').value.trim();
+        if (!prompt) return alert('Masukkan prompt dahulu.');
+        const btn = event.target; btn.textContent = 'Mengimbas...'; btn.disabled = true;
+        try {
+            const res = await fetch(`${API}/api/v1/shield`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...h },
+                body: JSON.stringify({ prompt })
+            });
+            showScanResult('shieldResult', await res.json());
+        } catch(e) { alert('Ralat: ' + e.message); }
+        finally { btn.textContent = 'Uji Prompt'; btn.disabled = false; }
+    }
+
+    async function runCodeScan() {
+        const h = getToolHeaders(); if (!h) return;
+        const code = document.getElementById('codeInput').value.trim();
+        if (!code) return alert('Masukkan kod dahulu.');
+        const btn = event.target; btn.textContent = 'Mengimbas...'; btn.disabled = true;
+        try {
+            const res = await fetch(`${API}/api/v1/scan/code`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...h },
+                body: JSON.stringify({
+                    code,
+                    filename: document.getElementById('codeFilename').value || 'code.py',
+                    engine_mode: document.getElementById('codeEngine').value
+                })
+            });
+            showScanResult('codeResult', await res.json());
+        } catch(e) { alert('Ralat: ' + e.message); }
+        finally { btn.textContent = 'Imbas Kod'; btn.disabled = false; }
+    }
+
+    async function runRepoScan() {
+        const h = getToolHeaders(); if (!h) return;
+        const repo_url = document.getElementById('repoUrl').value.trim();
+        if (!repo_url) return alert('Masukkan URL repo dahulu.');
+        const btn = event.target; btn.textContent = 'Mengimbas...'; btn.disabled = true;
+        try {
+            const res = await fetch(`${API}/api/v1/scan/repo`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...h },
+                body: JSON.stringify({ repo_url, branch: document.getElementById('repoBranch').value || 'main' })
+            });
+            showScanResult('repoResult', await res.json());
+        } catch(e) { alert('Ralat: ' + e.message); }
+        finally { btn.textContent = 'Imbas Repo'; btn.disabled = false; }
+    }
+
+    async function runUrlScan() {
+        const h = getToolHeaders(); if (!h) return;
+        const url = document.getElementById('urlInput').value.trim();
+        if (!url) return alert('Masukkan URL dahulu.');
+        const btn = event.target; btn.textContent = 'Mengimbas...'; btn.disabled = true;
+        try {
+            const res = await fetch(`${API}/api/v1/scan/url`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...h },
+                body: JSON.stringify({ url })
+            });
+            showScanResult('urlResult', await res.json());
+        } catch(e) { alert('Ralat: ' + e.message); }
+        finally { btn.textContent = 'Imbas URL'; btn.disabled = false; }
+    }
+
+    function updateZipLabel() {
+        const f = document.getElementById('zipFile').files[0];
+        document.getElementById('zipLabel').textContent = f ? f.name + ' (' + (f.size/1024/1024).toFixed(2) + ' MB)' : 'Tiada fail dipilih';
+    }
+
+    async function runUploadScan() {
+        const h = getToolHeaders(); if (!h) return;
+        const file = document.getElementById('zipFile').files[0];
+        if (!file) return alert('Pilih fail ZIP dahulu.');
+        const btn = event.target; btn.textContent = 'Memuat naik...'; btn.disabled = true;
+        try {
+            const form = new FormData(); form.append('file', file);
+            const res = await fetch(`${API}/api/v1/scan/upload`, { method: 'POST', headers: h, body: form });
+            showScanResult('uploadResult', await res.json());
+        } catch(e) { alert('Ralat: ' + e.message); }
+        finally { btn.textContent = 'Muat Naik & Imbas'; btn.disabled = false; }
     }
 
     if (getToken()) showPortal();

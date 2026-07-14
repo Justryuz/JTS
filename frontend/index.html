@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ms">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrustGuard — AI Security Gateway</title>
+    <title>TrustGuard — Enterprise AI Security Gateway</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐛</text></svg>">
     <style>
@@ -57,38 +57,33 @@
                 <span class="h-2 w-2 rounded-full bg-slate-600"></span>
                 <span class="text-slate-500">checking...</span>
             </div>
-            <a href="/portal" class="text-sm text-slate-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-800/50">Log Masuk</a>
-            <a href="/portal" class="text-sm bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-1.5 rounded-lg transition-colors">Daftar</a>
+            <a href="/portal" class="text-sm text-slate-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-800/50">Login <span class="text-slate-600">/ Log Masuk</span></a>
+            <a href="/portal" class="text-sm bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-1.5 rounded-lg transition-colors">Register <span class="opacity-70">/ Daftar</span></a>
         </div>
     </div>
 </nav>
 
 <!-- ── HERO ───────────────────────────────────────────────────────────── -->
 <section class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20 text-center z-10">
-
-    <!-- Top badge -->
-    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-950/50 border border-indigo-800/50 mono text-xs text-indigo-400 mb-8">
-        <span class="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
-        OWASP LLM Top 10 &nbsp;·&nbsp; CVE/CWE Scanner &nbsp;·&nbsp; NACSA Compliant
-    </div>
-
-    <h1 class="text-5xl sm:text-7xl font-black text-white leading-tight glow-text mb-6">
-        Lindungi AI Anda<br>
-        <span class="text-indigo-400">Sebelum Diserang</span>
+    <h1 class="text-5xl sm:text-7xl font-black text-white leading-tight glow-text mb-4">
+        Protect Your AI<br>
+        <span class="text-indigo-400">Before It's Exploited</span>
     </h1>
+    <p class="text-sm text-slate-600 mb-6 italic">Lindungi AI Anda Sebelum Diserang</p>
 
-    <p class="text-lg text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-        TrustGuard adalah <span class="text-slate-200 font-medium">AI Security Gateway</span> berpusat yang melindungi model LLM dan aplikasi AI anda daripada Prompt Injection, Jailbreak, dan kelemahan CVE/CWE — mengikut standard Malaysia dan antarabangsa.
+    <p class="text-lg text-slate-400 max-w-2xl mx-auto mb-2 leading-relaxed">
+        TrustGuard is a centralised <span class="text-slate-200 font-medium">AI Security Gateway</span> protecting your LLM models and AI applications from Prompt Injection, Jailbreak, and CVE/CWE vulnerabilities
     </p>
+    <p class="text-sm text-slate-600 max-w-2xl mx-auto mb-10 italic">TrustGuard adalah AI Security Gateway berpusat yang melindungi model LLM dan aplikasi AI anda daripada Prompt Injection, Jailbreak, dan kelemahan CVE/CWE.</p>
 
     <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
         <a href="/portal" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all glow-indigo">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-            Masuk ke Portal
+            Go to Portal <span class="opacity-60 font-normal">/ Masuk Portal</span>
         </a>
         <a href="/portal" class="inline-flex items-center gap-2 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-200 font-semibold px-8 py-3.5 rounded-xl transition-all">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-            Daftar Percuma
+            Register Free <span class="opacity-60 font-normal">/ Daftar Percuma</span>
         </a>
     </div>
 
@@ -144,7 +139,8 @@
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 z-10 relative">
     <div class="text-center mb-12">
         <p class="mono text-xs text-indigo-400 tracking-widest mb-3">// CAPABILITIES</p>
-        <h2 class="text-3xl font-black text-white">Pertahanan Berlapis untuk AI Anda</h2>
+        <h2 class="text-3xl font-black text-white">Multi-Layer Defence for Your AI</h2>
+        <p class="text-sm text-slate-600 mt-1 italic">Pertahanan Berlapis untuk AI Anda</p>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
@@ -154,7 +150,8 @@
             </div>
             <div>
                 <h3 class="font-bold text-white mb-1">Prompt Injection & Jailbreak</h3>
-                <p class="text-sm text-slate-400">34 pattern OWASP LLM01/LLM02 + ML model untuk kesan serangan yang disamarkan.</p>
+                <p class="text-sm text-slate-400">39 OWASP LLM01/LLM02 patterns + ML model to detect disguised attacks.</p>
+                <p class="text-xs text-slate-600 italic mt-1">39 pattern OWASP + model ML untuk kesan serangan yang disamarkan.</p>
             </div>
             <div class="mono text-xs text-slate-600 space-y-1">
                 <p class="text-rose-500/70">→ ignore previous instructions</p>
@@ -169,7 +166,8 @@
             </div>
             <div>
                 <h3 class="font-bold text-white mb-1">CVE/CWE Code Scanner</h3>
-                <p class="text-sm text-slate-400">Imbas kod sumber AI-generated untuk kelemahan SQL Injection, XSS, Path Traversal dan lebih.</p>
+                <p class="text-sm text-slate-400">Scan AI-generated source code for SQL Injection, XSS, Path Traversal and more.</p>
+                <p class="text-xs text-slate-600 italic mt-1">Imbas kod sumber AI-generated untuk kelemahan SQL Injection, XSS, Path Traversal dan lebih.</p>
             </div>
             <div class="mono text-xs text-slate-600 space-y-1">
                 <p class="text-amber-500/70">→ CWE-89 SQL Injection</p>
@@ -183,8 +181,9 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             </div>
             <div>
-                <h3 class="font-bold text-white mb-1">Compliance Malaysia</h3>
-                <p class="text-sm text-slate-400">Skor pematuhan automatik berdasarkan NACSA, JPDP, MCMC, AIGE dan MY-AI Standards.</p>
+                <h3 class="font-bold text-white mb-1">Malaysian Compliance</h3>
+                <p class="text-sm text-slate-400">Automatic compliance scoring based on NACSA, JPDP, MCMC, AIGE and MY-AI Standards.</p>
+                <p class="text-xs text-slate-600 italic mt-1">Skor pematuhan automatik berdasarkan NACSA, JPDP, MCMC, AIGE dan MY-AI Standards.</p>
             </div>
             <div class="mono text-xs text-slate-600 space-y-1">
                 <p class="text-emerald-500/70">→ NACSA AI Security Framework</p>
@@ -199,16 +198,18 @@
 <!-- ── HOW IT WORKS ───────────────────────────────────────────────────── -->
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 z-10 relative">
     <div class="text-center mb-12">
-        <p class="mono text-xs text-indigo-400 tracking-widest mb-3">// INTEGRASI</p>
-        <h2 class="text-3xl font-black text-white">Sambung dalam 2 Langkah</h2>
+        <p class="mono text-xs text-indigo-400 tracking-widest mb-3">// INTEGRATION / INTEGRASI</p>
+        <h2 class="text-3xl font-black text-white">Integrate in 2 Steps</h2>
+        <p class="text-sm text-slate-600 mt-1 italic">Sambung dalam 2 Langkah</p>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
         <div class="bg-slate-900/40 border border-slate-800/60 rounded-xl p-6">
             <div class="flex items-center gap-3 mb-4">
                 <span class="mono text-2xl font-black text-indigo-500/40">01</span>
-                <h3 class="font-bold text-white">Jana API Key</h3>
+                <h3 class="font-bold text-white">Generate API Key</h3>
             </div>
-            <p class="text-sm text-slate-400 mb-4">Daftar akaun, masukkan domain anda, dan jana API Key yang unik. Key disimpan sebagai SHA-256 hash.</p>
+            <p class="text-sm text-slate-400 mb-1">Register an account, enter your domain, and generate a unique API Key. Key is stored as a SHA-256 hash.</p>
+            <p class="text-xs text-slate-600 italic mb-4">Daftar akaun, masukkan domain anda, dan jana API Key yang unik. Key disimpan sebagai SHA-256 hash.</p>
             <div class="bg-[#0d1117] rounded-lg p-3 mono text-xs text-emerald-400">
                 aisec_live_a3f9b2c1d4e5...
             </div>
@@ -216,9 +217,10 @@
         <div class="bg-slate-900/40 border border-slate-800/60 rounded-xl p-6">
             <div class="flex items-center gap-3 mb-4">
                 <span class="mono text-2xl font-black text-indigo-500/40">02</span>
-                <h3 class="font-bold text-white">Hantar Prompt ke Shield</h3>
+                <h3 class="font-bold text-white">Send Prompts to Shield</h3>
             </div>
-            <p class="text-sm text-slate-400 mb-4">Setiap prompt pengguna dihantar ke <code class="text-indigo-400">/api/v1/shield</code> sebelum diproses oleh model AI anda.</p>
+            <p class="text-sm text-slate-400 mb-1">Every user prompt is sent to <code class="text-indigo-400">/api/v1/shield</code> before reaching your AI model.</p>
+            <p class="text-xs text-slate-600 italic mb-4">Setiap prompt pengguna dihantar ke <code class="text-indigo-400">/api/v1/shield</code> sebelum diproses oleh model AI anda.</p>
             <div class="bg-[#0d1117] rounded-lg p-3 mono text-xs text-slate-400 space-y-1">
                 <p><span class="text-indigo-400">POST</span> /api/v1/shield</p>
                 <p><span class="text-slate-600">→</span> <span class="text-emerald-400">ALLOWED</span> / <span class="text-rose-400">BLOCKED</span></p>
@@ -230,7 +232,7 @@
 <!-- ── STANDARDS ─────────────────────────────────────────────────────── -->
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 z-10 relative">
     <div class="text-center mb-8">
-        <p class="mono text-xs text-slate-500 tracking-widest">// STANDARD & PEMATUHAN</p>
+        <p class="mono text-xs text-slate-500 tracking-widest">// STANDARDS & COMPLIANCE / STANDARD & PEMATUHAN</p>
     </div>
     <div class="flex flex-wrap justify-center gap-3">
             <span class="mono text-xs px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 text-slate-400 rounded-full">OWASP Top 10</span>
@@ -247,14 +249,16 @@
 <!-- ── CTA ────────────────────────────────────────────────────────────── -->
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 z-10 relative">
     <div class="bg-indigo-950/30 border border-indigo-800/30 rounded-2xl p-12 text-center glow-indigo">
-        <h2 class="text-3xl font-black text-white mb-4">Mula Lindungi AI Anda Sekarang</h2>
-        <p class="text-slate-400 mb-8 max-w-lg mx-auto">Daftar percuma, jana API Key, dan integrasikan TrustGuard ke dalam sistem AI anda dalam masa 5 minit.</p>
+        <h2 class="text-3xl font-black text-white mb-2">Start Protecting Your AI Now</h2>
+        <p class="text-slate-600 text-sm italic mb-3">Mula Lindungi AI Anda Sekarang</p>
+        <p class="text-slate-400 mb-2 max-w-lg mx-auto">Register for free, generate an API Key, and integrate TrustGuard into your AI system in under 5 minutes.</p>
+        <p class="text-slate-600 text-sm italic mb-8 max-w-lg mx-auto">Daftar percuma, jana API Key, dan integrasikan TrustGuard ke dalam sistem AI anda dalam masa 5 minit.</p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="/portal" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all">
-                Daftar Percuma
+                Register Free <span class="opacity-60 font-normal">/ Daftar Percuma</span>
             </a>
             <a href="/docs" target="_blank" class="inline-flex items-center gap-2 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-200 font-semibold px-8 py-3.5 rounded-xl transition-all">
-                Lihat API Docs
+                API Docs
             </a>
         </div>
     </div>

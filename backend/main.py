@@ -8,16 +8,16 @@ Standards: Clean Architecture, Part 2 §12
 from __future__ import annotations
 
 import logging
-import os
 import sys
+from pathlib import Path
 
 # Ensure backend/ is on sys.path when running directly
-sys.path.insert(0, os.path.dirname(__file__))
+_BASE_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(_BASE_DIR))
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from config.settings import get_settings
 from database.session import run_migrations
@@ -90,15 +90,19 @@ app.include_router(admin_router)
 app.include_router(report_router)
 
 # ── Frontend static pages ─────────────────────────────────────────────────────
-FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
+_FRONTEND_DIR = (_BASE_DIR.parent / "frontend").resolve()
+_ALLOWED_PAGES = {"index.html", "portal.html"}
 
 
 def _serve(page: str) -> FileResponse:
-    path = os.path.join(FRONTEND_DIR, page)
-    if not os.path.exists(path):
-        from fastapi import HTTPException
+    # CWE-22: whitelist only known pages — never accept user-controlled path segments
+    if page not in _ALLOWED_PAGES:
         raise HTTPException(status_code=404, detail="Page not found")
-    return FileResponse(path)
+    resolved = (_FRONTEND_DIR / page).resolve()
+    # Ensure resolved path is directly inside _FRONTEND_DIR (no traversal, no symlink escape)
+    if resolved.parent != _FRONTEND_DIR or not resolved.is_file():
+        raise HTTPException(status_code=404, detail="Page not found")
+    return FileResponse(resolved)
 
 
 @app.get("/", include_in_schema=False)

@@ -9,7 +9,6 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 
-from schemas.common import StandardResponse
 from utils.jwt_utils import get_current_user_id
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -31,15 +30,11 @@ def update_engine(
         update_rules_flag=body.update_rules,
         update_models_flag=body.update_models,
     )
-    return StandardResponse(
-        message="Engine update completed",
-        data={
-            "success": result.success,
-            "rules_updated": result.rules_updated,
-            "models_refreshed": result.models_refreshed,
-            "errors": result.errors,
-            "timestamp": result.timestamp,
-            "note": "Models will re-download on next scan request.",
-        },
-        request_id=getattr(request.state, "request_id", ""),
-    )
+    return {
+        "success": result.success,
+        "rules_updated": result.rules_updated,
+        "models_refreshed": result.models_refreshed,
+        "errors": result.errors,
+        "timestamp": result.timestamp,
+        "note": "Models will re-download on next scan request.",
+    }
