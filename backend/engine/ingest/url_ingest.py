@@ -2,7 +2,9 @@
 Live URL Scanner — DAST asas untuk semak keselamatan laman web
 """
 
+import ipaddress
 import logging
+import socket
 import ssl
 import time
 from datetime import datetime, timezone
@@ -44,18 +46,82 @@ SIMPLE_EXPLANATIONS = {
 }
 
 
+# ---------------------------------------------------------------------------
+# SSRF PROTECTION
+# ---------------------------------------------------------------------------
+def _is_safe_host(hostname: str) -> bool:
+    """Semak host tidak resolve ke IP dalaman/private/reserved (elak SSRF)."""
+    if not hostname:
+        return False
+    try:
+        infos = socket.getaddrinfo(hostname, None)
+    except socket.gaierror:
+        return False
+
+    if not infos:
+        return False
+
+    for info in infos:
+        ip_str = info[4][0]
+        try:
+            ip_obj = ipaddress.ip_address(ip_str)
+        except ValueError:
+            return False
+        if (
+            ip_obj.is_private
+            or ip_obj.is_loopback
+            or ip_obj.is_link_local      # termasuk 169.254.169.254 (cloud metadata)
+            or ip_obj.is_multicast
+            or ip_obj.is_reserved
+            or ip_obj.is_unspecified
+        ):
+            return False
+    return True
+
+
+def _validate_and_normalize_url(url: str) -> str:
+    """Validate skema + host, block IP dalaman. Raise ValueError jika tidak selamat."""
+    url = url.strip()
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
+
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError("Hanya URL http:// atau https:// dibenarkan")
+    if not parsed.hostname:
+        raise ValueError("URL tidak sah")
+    if not _is_safe_host(parsed.hostname):
+        raise ValueError("URL menuju ke alamat IP dalaman/private/reserved — tidak dibenarkan")
+
+    return url
+
+
+def _redirect_guard(request: httpx.Request) -> None:
+    """Event hook — validate SETIAP request (termasuk redirect) sebelum dihantar."""
+    host = request.url.host
+    if not _is_safe_host(host):
+        raise httpx.RequestError(f"Redirect ke host tidak selamat disekat: {host}", request=request)
+
+
 def scan_live_url(url: str) -> dict:
     """Scan laman web hidup untuk isu keselamatan asas (DAST)."""
     start = time.time()
     issues = []
 
-    if not url.startswith(("http://", "https://")):
-        url = "https://" + url
+    try:
+        url = _validate_and_normalize_url(url)
+    except ValueError as e:
+        return {"error": str(e)}
 
     parsed = urlparse(url)
     base_url = f"{parsed.scheme}://{parsed.netloc}"
 
-    client = httpx.Client(timeout=TIMEOUT, follow_redirects=True, verify=False)
+    client = httpx.Client(
+        timeout=TIMEOUT,
+        follow_redirects=True,
+        verify=True,  # SSL verification diaktifkan — SSL error ditangkap & dilog sebagai issue
+        event_hooks={"request": [_redirect_guard]},
+    )
 
     try:
         # 1. Semak exposed paths
@@ -133,8 +199,8 @@ def scan_live_url(url: str) -> dict:
             try:
                 ctx = ssl.create_default_context()
                 with ctx.wrap_socket(
-                    __import__("socket").create_connection((parsed.netloc, 443), timeout=TIMEOUT),
-                    server_hostname=parsed.netloc,
+                    socket.create_connection((parsed.hostname, parsed.port or 443), timeout=TIMEOUT),
+                    server_hostname=parsed.hostname,
                 ) as s:
                     cert = s.getpeercert()
                     expiry_str = cert.get("notAfter", "")

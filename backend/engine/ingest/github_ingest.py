@@ -4,6 +4,7 @@ GitHub Repo Ingestion — Clone & scan keseluruhan repo
 
 import logging
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -23,17 +24,45 @@ MAX_REPO_SIZE_MB = 200
 MAX_FILES = 500
 SCAN_TIMEOUT = 60
 
+ALLOWED_HOSTS = {"github.com", "gitlab.com", "bitbucket.org"}
+
+
+def _validate_repo_url(repo_url: str) -> None:
+    """Validate repo_url untuk elak git argument injection & SSRF ke host luar allowlist."""
+    if repo_url.startswith("-"):
+        raise ValueError("URL tidak sah")
+    if not re.match(r"^https://([\w.-]+)/[\w.-]+/[\w.-]+(\.git)?/?$", repo_url):
+        raise ValueError("Format repo URL tidak sah. Guna format: https://github.com/user/repo")
+    host = repo_url.split("/")[2]
+    if host not in ALLOWED_HOSTS:
+        raise ValueError(f"Host '{host}' tidak dibenarkan")
+
+
+def _validate_branch(branch: str) -> None:
+    """Validate nama branch — elak argument injection melalui --branch flag."""
+    if not branch or branch.startswith("-"):
+        raise ValueError("Nama branch tidak sah")
+    if not re.match(r"^[\w./-]{1,100}$", branch):
+        raise ValueError("Nama branch tidak sah")
+
 
 def scan_github_repo(repo_url: str, branch: str = "main") -> dict:
     """Clone repo GitHub dan scan semua fail kod untuk CVE/CWE, secrets, dan dependencies."""
+    try:
+        _validate_repo_url(repo_url)
+        _validate_branch(branch)
+    except ValueError as e:
+        return {"error": str(e)}
+
     tmp_dir = tempfile.mkdtemp(prefix="justguard_")
     start = time.time()
 
     try:
-        # Clone repo
+        # Clone repo — "--" memastikan git treat repo_url sebagai positional arg,
+        # bukan flag, walaupun validation di atas dah block kebanyakan kes
         try:
             subprocess.run(
-                ["git", "clone", "--depth=1", "--branch", branch, repo_url, tmp_dir],
+                ["git", "clone", "--depth=1", "--branch", branch, "--", repo_url, tmp_dir],
                 timeout=SCAN_TIMEOUT,
                 capture_output=True,
                 check=True,
@@ -43,7 +72,7 @@ def scan_github_repo(repo_url: str, branch: str = "main") -> dict:
             shutil.rmtree(tmp_dir, ignore_errors=True)
             tmp_dir = tempfile.mkdtemp(prefix="justguard_")
             subprocess.run(
-                ["git", "clone", "--depth=1", repo_url, tmp_dir],
+                ["git", "clone", "--depth=1", "--", repo_url, tmp_dir],
                 timeout=SCAN_TIMEOUT,
                 capture_output=True,
                 check=True,
