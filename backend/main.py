@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 # Ensure backend/ is on sys.path when running directly
-_BASE_DIR = Path(__file__).resolve().parent
+_BASE_DIR = Path(__file__).parent
 sys.path.insert(0, str(_BASE_DIR))
 
 from fastapi import FastAPI, HTTPException
@@ -90,7 +90,7 @@ app.include_router(admin_router)
 app.include_router(report_router)
 
 # ── Frontend static pages ─────────────────────────────────────────────────────
-_FRONTEND_DIR = (_BASE_DIR.parent / "frontend").resolve()
+_FRONTEND_DIR = _BASE_DIR.parent / "frontend"
 _ALLOWED_PAGES = {"index.html", "portal.html"}
 
 
@@ -98,11 +98,10 @@ def _serve(page: str) -> FileResponse:
     # CWE-22: whitelist only known pages — never accept user-controlled path segments
     if page not in _ALLOWED_PAGES:
         raise HTTPException(status_code=404, detail="Page not found")
-    resolved = (_FRONTEND_DIR / page).resolve()
-    # Ensure resolved path is directly inside _FRONTEND_DIR (no traversal, no symlink escape)
-    if resolved.parent != _FRONTEND_DIR or not resolved.is_file():
+    file_path = _FRONTEND_DIR / page
+    if not file_path.is_file():
         raise HTTPException(status_code=404, detail="Page not found")
-    return FileResponse(resolved)
+    return FileResponse(str(file_path))
 
 
 @app.get("/", include_in_schema=False)
