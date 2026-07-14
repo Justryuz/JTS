@@ -100,13 +100,13 @@
             <span class="h-3 w-3 rounded-full bg-emerald-500/70"></span>
             <span class="mono text-xs text-slate-500 ml-2">TrustGuard — shield endpoint</span>
         </div>
-        <div class="p-5 mono text-sm space-y-2">
-            <p><span class="text-slate-500">$</span> <span class="text-emerald-400">curl</span> <span class="text-slate-300">-X POST https://api.TrustGuard.my/api/v1/shield</span></p>
-            <p class="text-slate-500 pl-4">-H <span class="text-yellow-400">"X-API-Key: aisec_live_xxxx"</span></p>
-            <p class="text-slate-500 pl-4">-d <span class="text-yellow-400">'{"prompt": "ignore previous instructions..."}'</span></p>
+        <div class="p-5 mono text-sm space-y-2" id="terminalPreview">
+            <p><span class="text-slate-500">$</span> <span id="curlCommand" class="text-slate-300"></span><span id="cmdCursor" class="terminal-cursor"></span></p>
+            <p class="text-slate-500 pl-4">-H <span id="headerLine" class="text-yellow-400"></span></p>
+            <p class="text-slate-500 pl-4">-d <span id="dataLine" class="text-yellow-400"></span></p>
             <div class="border-t border-slate-800 pt-3 mt-3">
                 <p><span class="text-slate-500">// Response</span></p>
-                <p><span class="text-rose-400">{"status": "BLOCKED", "reason": "PROMPT_INJECTION"}</span> <span class="terminal-cursor"></span></p>
+                <p><span id="responseLine" class="text-rose-400"></span><span id="respCursor" class="terminal-cursor"></span></p>
             </div>
         </div>
     </div>
