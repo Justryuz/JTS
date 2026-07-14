@@ -747,8 +747,9 @@ class UpdateRequest(BaseModel):
     "/admin/update",
     tags=["Admin"],
     summary="Kemas kini enjin keselamatan",
-    description="Perbaharui peraturan atau model ML TrustGuard AI untuk mengekalkan ketepatan dan perlindungan terhadap ancaman terbaru.
-",
+    description=(
+        "Perbaharui peraturan atau model ML TrustGuard AI untuk mengekalkan ketepatan dan perlindungan terhadap ancaman terbaru."
+    ),
 )
 def update_engine(
     body: UpdateRequest,
@@ -774,8 +775,9 @@ def update_engine(
     "/health",
     tags=["Health"],
     summary="Semak kesihatan servis",
-    description="Semak status TrustGuard AI, sama ada enjin beroperasi, dan versi aplikasi yang sedang berjalan.
-",
+    description=(
+        "Semak status TrustGuard AI, sama ada enjin beroperasi, dan versi aplikasi yang sedang berjalan."
+    ),
 )
 def health():
     return {
