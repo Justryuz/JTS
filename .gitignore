@@ -1,0 +1,8 @@
+backend/venv/
+backend/__pycache__/
+backend/engine/__pycache__/
+backend/compliance/__pycache__/
+backend/reports/__pycache__/
+backend/*.db
+*.pyc
+.env

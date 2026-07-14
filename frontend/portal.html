@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JustGuard — Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐛</text></svg>">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="loginScreen" class="min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-sm space-y-6">
+        <div class="text-center space-y-2">
+            <a href="/" class="inline-block mb-2">
+                <div class="inline-flex bg-indigo-600/20 border border-indigo-500/30 p-3 rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <path d="M9 12l2 2 4-4"/>
+                    </svg>
+                </div>
+            </a>
+            <h1 class="text-2xl font-bold text-white">JustGuard</h1>
+            <p class="text-sm text-slate-400">Log masuk atau daftar akaun baru</p>
+        </div>
+
+        <div id="authError" class="hidden text-sm px-4 py-3 rounded-lg"></div>
+
+        <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-4">
+            <input id="authEmail" type="email" placeholder="Email"
+                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 text-sm placeholder:text-slate-600">
+            <input id="authPassword" type="password" placeholder="Kata Laluan"
+                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 text-sm placeholder:text-slate-600">
+            <div class="flex gap-3 pt-1">
+                <button onclick="doLogin()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm py-2.5 rounded-lg transition-colors">Log Masuk</button>
+                <button onclick="doRegister()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium text-sm py-2.5 rounded-lg transition-colors">Daftar</button>
+            </div>
+        </div>
+        <p class="text-center text-xs text-slate-600"><a href="/" class="hover:text-slate-400 transition-colors">← Kembali ke laman utama</a></p>
+    </div>
+</div>
+
+<!-- ===== MAIN PORTAL ===== -->
+<div id="portalScreen" class="hidden">
+
+    <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600/20 border border-indigo-500/30 p-2 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                </div>
+                <span class="font-bold text-lg tracking-wider text-white">JustGuard <span class="text-indigo-400 text-xs px-2 py-0.5 bg-indigo-950 rounded border border-indigo-800">v1</span></span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="navEmail" class="text-sm text-slate-400"></span>
+                <button onclick="doLogout()" class="text-xs text-slate-500 hover:text-rose-400 transition-colors">Log Keluar</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- STATS -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-slate-800/50 border border-slate-700/60 p-6 rounded-xl space-y-2">
+                <p class="text-sm text-slate-400 font-medium">Jumlah Imbasan Prompt</p>
+                <p id="statTotal" class="text-3xl font-bold text-white">—</p>
+                <span class="text-xs text-emerald-400 font-medium">Jumlah keseluruhan</span>
+            </div>
+            <div class="bg-slate-800/50 border border-slate-700/60 p-6 rounded-xl space-y-2">
+                <p class="text-sm text-slate-400 font-medium">Ancaman Dikesan & Disekat</p>
+                <p id="statBlocked" class="text-3xl font-bold text-rose-500">—</p>
+                <span id="statRate" class="text-xs text-rose-400 font-medium">Kadar ancaman: —</span>
+            </div>
+            <div class="bg-slate-800/50 border border-slate-700/60 p-6 rounded-xl space-y-2">
+                <p class="text-sm text-slate-400 font-medium">Status AI Guard Engine</p>
+                <div class="flex items-center gap-2 pt-1">
+                    <span class="h-3 w-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <p class="text-xl font-semibold text-emerald-400">Aktif & Selamat</p>
+                </div>
+                <span class="text-xs text-slate-500">JustGuard Detection Engine v1</span>
+            </div>
+        </section>
+
+        <!-- API KEY MANAGEMENT -->
+        <section class="bg-slate-800/40 border border-slate-800 rounded-xl p-6 space-y-6">
+            <div>
+                <h2 class="text-xl font-bold text-white">Pengurusan Kunci API & Domain</h2>
+                <p class="text-sm text-slate-400">Daftarkan domain aplikasi/CMS anda untuk menjana API Key. Enjin hanya menerima permintaan dari domain yang disahkan.</p>
+            </div>
+            <form id="keyForm" class="flex flex-col sm:flex-row gap-4 max-w-2xl">
+                <input type="text" id="domainInput" required placeholder="contoh: lamanwebanda.com"
+                    class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 placeholder:text-slate-600 text-sm">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm px-6 py-2.5 rounded-lg transition-colors">Jana API Key Baru</button>
+            </form>
+
+            <div id="keyDisplayBox" class="hidden bg-indigo-950/40 border border-indigo-800 p-4 rounded-lg space-y-3">
+                <div class="flex items-start gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <div>
+                        <h4 class="font-semibold text-indigo-300 text-sm">Salin API Key Anda Sekarang!</h4>
+                        <p class="text-xs text-indigo-400/80">Kunci ini di-hash di pangkalan data dan <strong>TIDAK AKAN DIPAPARKAN LAGI</strong> selepas anda menutup halaman ini.</p>
+                    </div>
+                </div>
+                <div class="flex gap-2 max-w-xl">
+                    <input type="text" id="generatedKeyText" readonly
+                        class="w-full bg-slate-900 border border-indigo-900 font-mono text-xs p-2.5 rounded text-emerald-400 select-all focus:outline-none">
+                    <button onclick="copyKey()" class="bg-slate-800 hover:bg-slate-700 text-xs px-4 rounded border border-slate-700 font-medium whitespace-nowrap">Salin</button>
+                </div>
+            </div>
+
+            <div id="keysTableWrap" class="hidden space-y-3">
+                <h3 class="text-sm font-semibold text-slate-300">Kunci API Aktif</h3>
+                <div class="overflow-x-auto rounded-lg border border-slate-700">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-900/60 text-slate-400 border-b border-slate-700">
+                            <tr>
+                                <th class="p-3 font-medium">Domain</th>
+                                <th class="p-3 font-medium">Status</th>
+                                <th class="p-3 font-medium">Dicipta</th>
+                                <th class="p-3 font-medium">Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="keysTableBody" class="divide-y divide-slate-800 text-slate-300"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECURITY LOGS -->
+        <section class="bg-slate-800/40 border border-slate-800 rounded-xl overflow-hidden">
+            <div class="p-6 border-b border-slate-800 flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-white">Log Pemantauan Keselamatan Real-Time</h2>
+                    <p class="text-sm text-slate-400">Analisis terperinci mengenai cubaan eksploitasi model AI.</p>
+                </div>
+                <button onclick="loadLogs()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg transition-colors">↻ Muat Semula</button>
+            </div>
+            <!-- ENGINE UPDATE -->
+            <div class="p-6 border-b border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white">Kemaskini Enjin Pengesanan</h2>
+                    <p class="text-sm text-slate-400">Update rule patterns OWASP terkini & refresh model ML dari HuggingFace.</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="updateEngine(true, false)" class="text-xs bg-indigo-700 hover:bg-indigo-600 px-4 py-2 rounded-lg transition-colors font-medium">↑ Update Rules</button>
+                    <button onclick="updateEngine(false, true)" class="text-xs bg-violet-700 hover:bg-violet-600 px-4 py-2 rounded-lg transition-colors font-medium">↑ Refresh Models</button>
+                    <button onclick="updateEngine(true, true)" class="text-xs bg-emerald-700 hover:bg-emerald-600 px-4 py-2 rounded-lg transition-colors font-medium">↑ Update Semua</button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-slate-900/60 text-slate-400 border-b border-slate-800">
+                            <th class="p-4 font-medium">Masa/Tarikh</th>
+                            <th class="p-4 font-medium">Domain Asal</th>
+                            <th class="p-4 font-medium">Teks Prompt Input</th>
+                            <th class="p-4 font-medium">Jenis Serangan</th>
+                            <th class="p-4 font-medium">Tindakan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+                        <tr><td colspan="5" class="p-8 text-center text-slate-500 text-sm">Tiada log lagi. Hantar permintaan melalui /api/v1/shield untuk melihat log.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="border-t border-slate-800 mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span class="text-xs text-slate-500">JustGuard v1 — AI Security Gateway</span>
+            <span class="text-xs text-slate-600">Made with ❤️ from Sungai Buloh, Malaysia</span>
+        </div>
+    </footer>
+</div>
+
+<script>
+    const API = '';
+
+    function getToken() { return localStorage.getItem('aisec_token'); }
+    function getEmail() { return localStorage.getItem('aisec_email'); }
+
+    async function doRegister() {
+        const email = document.getElementById('authEmail').value.trim();
+        const password = document.getElementById('authPassword').value;
+        const res = await fetch(`${API}/portal/auth/register`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) return showAuthError(data.detail || 'Pendaftaran gagal');
+        showAuthError('Akaun berjaya didaftar! Sila log masuk.', 'ok');
+    }
+
+    async function doLogin() {
+        const email = document.getElementById('authEmail').value.trim();
+        const password = document.getElementById('authPassword').value;
+        const res = await fetch(`${API}/portal/auth/login`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) return showAuthError(data.detail || 'Log masuk gagal');
+        localStorage.setItem('aisec_token', data.access_token);
+        localStorage.setItem('aisec_email', email);
+        showPortal();
+    }
+
+    function doLogout() {
+        localStorage.removeItem('aisec_token');
+        localStorage.removeItem('aisec_email');
+        window.location.href = '/';
+    }
+
+    function showAuthError(msg, type = 'error') {
+        const el = document.getElementById('authError');
+        el.textContent = msg;
+        el.className = type === 'ok'
+            ? 'bg-emerald-950/50 border border-emerald-800 text-emerald-400 text-sm px-4 py-3 rounded-lg'
+            : 'bg-rose-950/50 border border-rose-800 text-rose-400 text-sm px-4 py-3 rounded-lg';
+        el.classList.remove('hidden');
+    }
+
+    function authHeaders() {
+        return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` };
+    }
+
+    function showPortal() {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('portalScreen').classList.remove('hidden');
+        document.getElementById('navEmail').textContent = getEmail();
+        loadStats(); loadKeys(); loadLogs();
+    }
+
+    async function loadStats() {
+        const res = await fetch(`${API}/portal/stats`, { headers: authHeaders() });
+        if (!res.ok) return;
+        const d = await res.json();
+        document.getElementById('statTotal').textContent = d.total_requests.toLocaleString();
+        document.getElementById('statBlocked').textContent = d.total_blocked.toLocaleString();
+        const rate = d.total_requests > 0 ? ((d.total_blocked / d.total_requests) * 100).toFixed(2) : '0.00';
+        document.getElementById('statRate').textContent = `Kadar ancaman: ${rate}%`;
+    }
+
+    document.getElementById('keyForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const domain = document.getElementById('domainInput').value.trim();
+        const res = await fetch(`${API}/portal/api-key/generate`, {
+            method: 'POST', headers: authHeaders(),
+            body: JSON.stringify({ allowed_domain: domain })
+        });
+        const data = await res.json();
+        if (!res.ok) return alert(data.detail || 'Gagal menjana kunci');
+        document.getElementById('generatedKeyText').value = data.api_key;
+        document.getElementById('keyDisplayBox').classList.remove('hidden');
+        document.getElementById('domainInput').value = '';
+        loadKeys(); loadStats();
+    });
+
+    async function loadKeys() {
+        const res = await fetch(`${API}/portal/api-keys`, { headers: authHeaders() });
+        if (!res.ok) return;
+        const keys = await res.json();
+        if (keys.length === 0) { document.getElementById('keysTableWrap').classList.add('hidden'); return; }
+        document.getElementById('keysTableWrap').classList.remove('hidden');
+        document.getElementById('keysTableBody').innerHTML = keys.map(k => `
+            <tr class="hover:bg-slate-800/20 transition-colors">
+                <td class="p-3 text-slate-300">${k.allowed_domain}</td>
+                <td class="p-3"><span class="px-2 py-0.5 text-xs font-semibold rounded-full ${k.is_active ? 'bg-emerald-950 text-emerald-400 border border-emerald-900' : 'bg-slate-900 text-slate-500'}">${k.is_active ? 'AKTIF' : 'DIREVOKE'}</span></td>
+                <td class="p-3 font-mono text-xs text-slate-500">${new Date(k.created_at).toLocaleString('ms-MY')}</td>
+                <td class="p-3">${k.is_active ? `<button onclick="revokeKey('${k.id}')" class="text-xs text-rose-500 hover:text-rose-400 transition-colors">Revoke</button>` : '—'}</td>
+            </tr>`).join('');
+    }
+
+    async function revokeKey(id) {
+        if (!confirm('Revoke kunci ini? Tindakan tidak boleh dibatalkan.')) return;
+        await fetch(`${API}/portal/api-key/${id}`, { method: 'DELETE', headers: authHeaders() });
+        loadKeys();
+    }
+
+    async function loadLogs() {
+        const res = await fetch(`${API}/portal/logs`, { headers: authHeaders() });
+        if (!res.ok) return;
+        const logs = await res.json();
+        const tbody = document.getElementById('logsTableBody');
+        if (logs.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-500 text-sm">Tiada log lagi.</td></tr>'; return; }
+        tbody.innerHTML = logs.map(l => {
+            const blocked = l.status === 'BLOCKED';
+            return `<tr class="hover:bg-slate-800/20 transition-colors">
+                <td class="p-4 font-mono text-xs text-slate-500">${new Date(l.created_at).toLocaleString('ms-MY')}</td>
+                <td class="p-4 text-slate-400">${l.source_domain}</td>
+                <td class="p-4 max-w-xs truncate font-mono text-xs ${blocked ? 'text-rose-300 bg-rose-950/10' : 'text-slate-400'} rounded">"${escHtml(l.input_text)}"</td>
+                <td class="p-4"><span class="px-2 py-0.5 text-xs font-semibold rounded-full ${blocked ? 'bg-rose-950 text-rose-400 border border-rose-900' : 'bg-slate-900 text-slate-500'}">${l.attack_type}</span></td>
+                <td class="p-4">${blocked ? '<span class="text-rose-500 font-bold text-xs">BLOCKED</span>' : '<span class="text-emerald-500 font-bold text-xs">ALLOWED</span>'}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function copyKey() {
+        const el = document.getElementById('generatedKeyText');
+        el.select();
+        navigator.clipboard.writeText(el.value).catch(() => document.execCommand('copy'));
+        alert('Kunci API berjaya disalin! Simpan di tempat selamat.');
+    }
+
+    function escHtml(str) {
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function updateEngine(rules, models) {
+        const res = await fetch(`${API}/admin/update`, {
+            method: 'POST', headers: authHeaders(),
+            body: JSON.stringify({ update_rules: rules, update_models: models })
+        });
+        const d = await res.json();
+        if (!res.ok) return alert('Gagal: ' + (d.detail || 'Unknown error'));
+        const msg = [
+            d.rules_updated ? '✅ Rules dikemaskini' : '',
+            d.models_refreshed.length ? `✅ Models di-refresh: ${d.models_refreshed.join(', ')}` : '',
+            d.errors.length ? `⚠️ Ralat: ${d.errors.join(', ')}` : '',
+            '\nModels akan re-download semasa scan seterusnya.'
+        ].filter(Boolean).join('\n');
+        alert(msg);
+    }
+
+    if (getToken()) showPortal();
+</script>
+</body>
+</html>

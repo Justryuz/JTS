@@ -1,0 +1,570 @@
+"""
+AI Security Gateway & Management Portal
+Backend API Server + Detection Engine
+OWASP-compliant FastAPI application
+"""
+
+import hashlib
+import os
+import re
+import secrets
+import uuid
+from datetime import datetime, timedelta, timezone
+from typing import Optional
+
+import sys
+import os
+sys.path.insert(0, os.path.dirname(__file__))
+
+import jwt
+from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, Response
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from passlib.context import CryptContext
+from pydantic import BaseModel, field_validator
+from sqlalchemy import Boolean, Column, DateTime, String, Text, create_engine
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+
+from engine import rule_engine, hybrid_engine, cve_scanner, updater
+from compliance import scorer
+from reports import pdf_generator
+
+# ---------------------------------------------------------------------------
+# CONFIG
+# ---------------------------------------------------------------------------
+DATABASE_URL = "sqlite:///./aisec.db"
+JWT_SECRET = os.getenv("JWT_SECRET")
+if not JWT_SECRET:
+    raise RuntimeError("JWT_SECRET environment variable is not set. Run: set JWT_SECRET=<strong-random-secret>")
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRE_MINUTES = 60
+
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+bearer_scheme = HTTPBearer()
+
+# ---------------------------------------------------------------------------
+# DATABASE MODELS
+# ---------------------------------------------------------------------------
+class Base(DeclarativeBase):
+    pass
+
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = Column(String, unique=True, nullable=False, index=True)
+    password_hash = Column(String, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class ApiKey(Base):
+    __tablename__ = "api_keys"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, nullable=False)
+    api_key_hash = Column(String, nullable=False, index=True)  # SHA-256
+    allowed_domain = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class SecurityLog(Base):
+    __tablename__ = "security_logs"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    api_key_id = Column(String, nullable=False)
+    source_domain = Column(String, nullable=False)
+    input_text = Column(Text, nullable=False)
+    status = Column(String, nullable=False)          # ALLOWED | BLOCKED
+    attack_type = Column(String, default="NONE")     # NONE | PROMPT_INJECTION | JAILBREAK
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+Base.metadata.create_all(bind=engine)
+
+# ---------------------------------------------------------------------------
+# DETECTION ENGINE (Heuristic / Rule-Based)
+# ---------------------------------------------------------------------------
+PROMPT_INJECTION_PATTERNS = [
+    r"ignore\s+(all\s+)?previous\s+instructions?",
+    r"disregard\s+(all\s+)?previous\s+instructions?",
+    r"forget\s+(your\s+)?(system\s+prompt|instructions?|context)",
+    r"override\s+(system|instructions?|prompt)",
+    r"bypass\s+(safety|filter|restriction|guideline)",
+    r"reveal\s+(your\s+)?(system\s+prompt|instructions?|prompt)",
+    r"print\s+(your\s+)?(system\s+prompt|instructions?)",
+    r"what\s+(are|were)\s+your\s+(original\s+)?instructions?",
+    r"show\s+me\s+your\s+(system\s+)?prompt",
+]
+
+JAILBREAK_PATTERNS = [
+    r"you\s+are\s+now\s+in\s+DAN\s+mode",
+    r"do\s+anything\s+now",
+    r"DAN\s+mode\s+(enabled|activated|on)",
+    r"act\s+as\s+(a\s+)?(developer|AI|assistant)\s+with\s+no\s+restrictions?",
+    r"you\s+have\s+no\s+(restrictions?|limitations?|rules?|guidelines?)",
+    r"pretend\s+(you\s+are|to\s+be)\s+(an?\s+)?(evil|unrestricted|unfiltered)",
+    r"system\s+override",
+    r"jailbreak",
+    r"developer\s+mode\s+(enabled|on|activated)",
+    r"enable\s+developer\s+mode",
+    r"you\s+are\s+now\s+(free|unrestricted|unfiltered)",
+    r"remove\s+(all\s+)?(your\s+)?(restrictions?|limitations?|filters?)",
+    r"(sudo|root)\s+(mode|access|override)",
+]
+
+
+def detect_attack(text: str) -> tuple[str, str]:
+    """
+    Returns (status, attack_type).
+    status: ALLOWED | BLOCKED
+    attack_type: NONE | PROMPT_INJECTION | JAILBREAK
+    """
+    normalized = text.lower().strip()
+
+    for pattern in PROMPT_INJECTION_PATTERNS:
+        if re.search(pattern, normalized, re.IGNORECASE):
+            return "BLOCKED", "PROMPT_INJECTION"
+
+    for pattern in JAILBREAK_PATTERNS:
+        if re.search(pattern, normalized, re.IGNORECASE):
+            return "BLOCKED", "JAILBREAK"
+
+    return "ALLOWED", "NONE"
+
+
+# ---------------------------------------------------------------------------
+# HELPERS
+# ---------------------------------------------------------------------------
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def sha256_hash(value: str) -> str:
+    return hashlib.sha256(value.encode()).hexdigest()
+
+
+def create_jwt(user_id: str) -> str:
+    payload = {
+        "sub": user_id,
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRE_MINUTES),
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+def verify_jwt(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)) -> str:
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload["sub"]
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+
+# ---------------------------------------------------------------------------
+# PYDANTIC SCHEMAS
+# ---------------------------------------------------------------------------
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v):
+        if '@' not in v or '.' not in v.split('@')[-1]:
+            raise ValueError('Format email tidak sah')
+        return v.lower().strip()
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v):
+        return v.lower().strip()
+
+
+class GenerateKeyRequest(BaseModel):
+    allowed_domain: str
+
+
+class ShieldRequest(BaseModel):
+    prompt: str
+
+
+class CodeScanRequest(BaseModel):
+    code: str
+    filename: str = "unknown"
+    engine_mode: str = "hybrid"  # rule | ml | hybrid
+
+
+# ---------------------------------------------------------------------------
+# FASTAPI APP
+# ---------------------------------------------------------------------------
+FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
+
+app = FastAPI(title="AI Security Gateway", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Restrict to specific origins in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Serve landing page
+@app.get("/", include_in_schema=False)
+def serve_landing():
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+
+# Serve portal dashboard
+@app.get("/portal", include_in_schema=False)
+def serve_portal():
+    return FileResponse(os.path.join(FRONTEND_DIR, "portal.html"))
+
+
+# --- Auth Endpoints ---
+
+@app.post("/portal/auth/register", status_code=201)
+def register(body: RegisterRequest, db: Session = Depends(get_db)):
+    if db.query(User).filter(User.email == body.email).first():
+        raise HTTPException(status_code=409, detail="Email already registered")
+    user = User(email=body.email, password_hash=pwd_context.hash(body.password))
+    db.add(user)
+    db.commit()
+    return {"message": "User registered successfully"}
+
+
+@app.post("/portal/auth/login")
+def login(body: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == body.email).first()
+    if not user or not pwd_context.verify(body.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return {"access_token": create_jwt(user.id), "token_type": "bearer"}
+
+
+# --- Portal Endpoints (JWT Protected) ---
+
+@app.post("/portal/api-key/generate", status_code=201)
+def generate_api_key(
+    body: GenerateKeyRequest,
+    user_id: str = Depends(verify_jwt),
+    db: Session = Depends(get_db),
+):
+    # Generate plain key — shown ONCE only
+    plain_key = f"aisec_live_{secrets.token_hex(24)}"
+    key_hash = sha256_hash(plain_key)
+
+    api_key = ApiKey(
+        user_id=user_id,
+        api_key_hash=key_hash,
+        allowed_domain=body.allowed_domain.lower().strip(),
+    )
+    db.add(api_key)
+    db.commit()
+
+    # Return plain key ONCE — never stored in plain text
+    return {
+        "api_key": plain_key,
+        "allowed_domain": api_key.allowed_domain,
+        "warning": "Copy this key now. It will NOT be shown again.",
+    }
+
+
+@app.get("/portal/api-keys")
+def list_api_keys(user_id: str = Depends(verify_jwt), db: Session = Depends(get_db)):
+    keys = db.query(ApiKey).filter(ApiKey.user_id == user_id).all()
+    return [
+        {
+            "id": k.id,
+            "allowed_domain": k.allowed_domain,
+            "is_active": k.is_active,
+            "created_at": k.created_at,
+        }
+        for k in keys
+    ]
+
+
+@app.delete("/portal/api-key/{key_id}")
+def revoke_api_key(
+    key_id: str,
+    user_id: str = Depends(verify_jwt),
+    db: Session = Depends(get_db),
+):
+    key = db.query(ApiKey).filter(ApiKey.id == key_id, ApiKey.user_id == user_id).first()
+    if not key:
+        raise HTTPException(status_code=404, detail="API key not found")
+    key.is_active = False
+    db.commit()
+    return {"message": "API key revoked"}
+
+
+@app.get("/portal/logs")
+def get_logs(
+    user_id: str = Depends(verify_jwt),
+    db: Session = Depends(get_db),
+    limit: int = 100,
+):
+    # Fetch logs for keys belonging to this user
+    user_key_ids = [k.id for k in db.query(ApiKey).filter(ApiKey.user_id == user_id).all()]
+    logs = (
+        db.query(SecurityLog)
+        .filter(SecurityLog.api_key_id.in_(user_key_ids))
+        .order_by(SecurityLog.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    return [
+        {
+            "id": l.id,
+            "source_domain": l.source_domain,
+            "input_text": l.input_text,
+            "status": l.status,
+            "attack_type": l.attack_type,
+            "created_at": l.created_at,
+        }
+        for l in logs
+    ]
+
+
+@app.get("/portal/stats")
+def get_stats(user_id: str = Depends(verify_jwt), db: Session = Depends(get_db)):
+    user_key_ids = [k.id for k in db.query(ApiKey).filter(ApiKey.user_id == user_id).all()]
+    total = db.query(SecurityLog).filter(SecurityLog.api_key_id.in_(user_key_ids)).count()
+    blocked = (
+        db.query(SecurityLog)
+        .filter(SecurityLog.api_key_id.in_(user_key_ids), SecurityLog.status == "BLOCKED")
+        .count()
+    )
+    return {"total_requests": total, "total_blocked": blocked, "engine_status": "ACTIVE"}
+
+
+# --- Public Shield Gateway ---
+
+@app.post("/api/v1/shield")
+def shield(
+    body: ShieldRequest,
+    x_api_key: str = Header(..., alias="X-API-Key"),
+    x_origin_domain: str = Header(..., alias="X-Origin-Domain"),
+    db: Session = Depends(get_db),
+):
+    # OWASP BOLA Mitigation: validate key hash + domain binding
+    key_hash = sha256_hash(x_api_key)
+    api_key_record = (
+        db.query(ApiKey)
+        .filter(ApiKey.api_key_hash == key_hash, ApiKey.is_active.is_(True))
+        .first()
+    )
+
+    if not api_key_record:
+        raise HTTPException(status_code=401, detail="Invalid or inactive API key")
+
+    # Domain validation — prevent cross-domain key abuse
+    if api_key_record.allowed_domain != x_origin_domain.lower().strip():
+        raise HTTPException(status_code=403, detail="Domain not authorized for this API key")
+
+    # Run Detection Engine (Hybrid: Rule + ML)
+    if body.engine_mode if hasattr(body, 'engine_mode') else True:
+        result = hybrid_engine.scan(body.prompt, use_ml=hybrid_engine.ml_engine.is_available())
+        detection_status = result.status
+        attack_type = result.attack_type
+    else:
+        rule_result = rule_engine.scan(body.prompt)
+        detection_status = rule_result.status
+        attack_type = rule_result.attack_type
+
+    # Record transaction
+    log = SecurityLog(
+        api_key_id=api_key_record.id,
+        source_domain=x_origin_domain,
+        input_text=body.prompt[:500],  # Truncate to prevent DB bloat
+        status=detection_status,
+        attack_type=attack_type,
+    )
+    db.add(log)
+    db.commit()
+
+    if detection_status == "BLOCKED":
+        return {"status": "BLOCKED", "reason": attack_type}
+
+    return {"status": "ALLOWED"}
+
+
+# --- Code Scan Endpoint ---
+
+@app.post("/api/v1/scan/code")
+def scan_code(
+    body: CodeScanRequest,
+    x_api_key: str = Header(..., alias="X-API-Key"),
+    x_origin_domain: str = Header(..., alias="X-Origin-Domain"),
+    db: Session = Depends(get_db),
+):
+    # Validate API key + domain
+    key_hash = sha256_hash(x_api_key)
+    api_key_record = (
+        db.query(ApiKey)
+        .filter(ApiKey.api_key_hash == key_hash, ApiKey.is_active.is_(True))
+        .first()
+    )
+    if not api_key_record:
+        raise HTTPException(status_code=401, detail="Invalid or inactive API key")
+    if api_key_record.allowed_domain != x_origin_domain.lower().strip():
+        raise HTTPException(status_code=403, detail="Domain not authorized")
+
+    # CVE/CWE scan
+    scan_result = cve_scanner.scan_code(body.code, body.filename)
+
+    # Compliance score
+    compliance = scorer.calculate(scan_result)
+
+    return {
+        "domain": x_origin_domain,
+        "filename": body.filename,
+        "total_issues": scan_result.total_issues,
+        "severity_breakdown": {
+            "critical": scan_result.critical,
+            "high": scan_result.high,
+            "medium": scan_result.medium,
+            "low": scan_result.low,
+        },
+        "vulnerabilities": [
+            {
+                "cwe_id": v.cwe_id,
+                "cve_ref": v.cve_ref,
+                "title": v.title,
+                "severity": v.severity,
+                "description": v.description,
+                "line_hint": v.line_hint,
+                "owasp_ref": v.owasp_ref,
+            }
+            for v in scan_result.vulnerabilities
+        ],
+        "compliance_flags": scan_result.compliance_flags,
+        "compliance_score": {
+            "overall": compliance.overall,
+            "grade": compliance.grade,
+            "breakdown": compliance.breakdown,
+        },
+    }
+
+
+# --- Compliance Score Endpoint ---
+
+@app.get("/portal/compliance/{domain}")
+def get_compliance(
+    domain: str,
+    user_id: str = Depends(verify_jwt),
+    db: Session = Depends(get_db),
+):
+    # Ambil semua log untuk domain ini
+    user_key_ids = [k.id for k in db.query(ApiKey).filter(ApiKey.user_id == user_id).all()]
+    logs = (
+        db.query(SecurityLog)
+        .filter(SecurityLog.api_key_id.in_(user_key_ids), SecurityLog.source_domain == domain)
+        .all()
+    )
+    total = len(logs)
+    blocked = sum(1 for l in logs if l.status == "BLOCKED")
+
+    # Skor asas berdasarkan kadar ancaman
+    threat_rate = (blocked / total * 100) if total > 0 else 0
+    base_score = max(0, 100 - (threat_rate * 2))
+
+    return {
+        "domain": domain,
+        "total_scans": total,
+        "blocked": blocked,
+        "threat_rate": round(threat_rate, 2),
+        "prompt_safety_score": round(base_score, 2),
+        "grade": "A" if base_score >= 90 else "B" if base_score >= 75 else "C" if base_score >= 60 else "D" if base_score >= 40 else "F",
+    }
+
+
+# --- PDF Report Endpoint ---
+
+@app.post("/portal/report/pdf")
+def generate_pdf_report(
+    body: CodeScanRequest,
+    user_id: str = Depends(verify_jwt),
+    db: Session = Depends(get_db),
+):
+    scan_result = cve_scanner.scan_code(body.code, body.filename)
+    compliance = scorer.calculate(scan_result)
+
+    user_key_ids = [k.id for k in db.query(ApiKey).filter(ApiKey.user_id == user_id).all()]
+    total = db.query(SecurityLog).filter(SecurityLog.api_key_id.in_(user_key_ids)).count()
+    blocked = (
+        db.query(SecurityLog)
+        .filter(SecurityLog.api_key_id.in_(user_key_ids), SecurityLog.status == "BLOCKED")
+        .count()
+    )
+
+    try:
+        pdf_bytes = pdf_generator.generate(
+            domain=body.filename,
+            scan_result=scan_result,
+            compliance_score=compliance,
+            prompt_stats={"total_requests": total, "total_blocked": blocked},
+        )
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=audit-report-{body.filename}.pdf"},
+        )
+    except RuntimeError as e:
+        raise HTTPException(status_code=501, detail=str(e))
+
+
+# --- Engine Update Endpoint ---
+
+class UpdateRequest(BaseModel):
+    update_rules: bool = True
+    update_models: bool = True
+
+
+@app.post("/admin/update")
+def update_engine(
+    body: UpdateRequest,
+    user_id: str = Depends(verify_jwt),
+):
+    result = updater.run_update(
+        update_rules_flag=body.update_rules,
+        update_models_flag=body.update_models,
+    )
+    return {
+        "success": result.success,
+        "rules_updated": result.rules_updated,
+        "models_refreshed": result.models_refreshed,
+        "errors": result.errors,
+        "timestamp": result.timestamp,
+        "note": "Models will re-download on next scan request.",
+    }
+
+
+# --- Health Check ---
+
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "engine": "ACTIVE",
+        "version": "1.0.0",
+        "ml_available": hybrid_engine.ml_engine.is_available(),
+    }
+
+
+# ---------------------------------------------------------------------------
+# ENTRY POINT
+# ---------------------------------------------------------------------------
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
