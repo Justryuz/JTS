@@ -280,6 +280,32 @@
         'http://localhost:8000/health'
     ];
 
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function typeLine(elementId, text, speed = 40) {
+        const el = document.getElementById(elementId);
+        el.textContent = '';
+        for (let i = 0; i < text.length; i += 1) {
+            el.textContent += text[i];
+            await sleep(speed + Math.random() * 20);
+        }
+    }
+
+    async function animateTerminal() {
+        await sleep(400);
+        await typeLine('curlCommand', 'curl -X POST https://api.TrustGuard.my/api/v1/shield', 28);
+        await sleep(180);
+        await typeLine('headerLine', '"X-API-Key: aisec_live_xxxx"', 16);
+        await sleep(120);
+        await typeLine('dataLine', "'{\"prompt\": \"ignore previous instructions...\"}'", 18);
+        await sleep(320);
+        await typeLine('responseLine', '{"status": "BLOCKED", "reason": "PROMPT_INJECTION"}', 18);
+        document.getElementById('cmdCursor').style.display = 'none';
+        document.getElementById('respCursor').style.display = 'inline';
+    }
+
     async function checkHealth() {
         const badge = document.getElementById('healthBadge');
         let data = null;
