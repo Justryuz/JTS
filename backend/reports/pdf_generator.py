@@ -1,7 +1,7 @@
 """
 PDF Audit Report Generator
-Menjana laporan audit keselamatan AI dalam format PDF
-Pematuhan: NACSA, JPDP, OWASP, AIGE
+Generates AI security audit reports in PDF format.
+Compliance: NACSA, JPDP, OWASP, AIGE
 """
 
 import io
@@ -27,7 +27,7 @@ def generate(
             HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
         )
     except ImportError:
-        raise RuntimeError("reportlab tidak terinstall. Jalankan: pip install reportlab")
+        raise RuntimeError("reportlab is not installed. Run: pip install reportlab")
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=2*cm, bottomMargin=2*cm)
@@ -41,12 +41,12 @@ def generate(
     body_style = ParagraphStyle("body", parent=styles["Normal"], fontSize=9, spaceAfter=4)
     warn_style = ParagraphStyle("warn", parent=styles["Normal"], fontSize=9, textColor=colors.red)
 
-    story.append(Paragraph("🛡️ AI Security Gateway — Laporan Audit Keselamatan", title_style))
-    story.append(Paragraph(f"Domain: <b>{domain}</b> | Dijana: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}", sub_style))
+    story.append(Paragraph("🛡️ AI Security Gateway — Security Audit Report", title_style))
+    story.append(Paragraph(f"Domain: <b>{domain}</b> | Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}", sub_style))
     story.append(HRFlowable(width="100%", thickness=1, color=colors.lightgrey, spaceAfter=12))
 
     # ── Compliance Score Summary ──────────────────────────────────────────
-    story.append(Paragraph("1. Ringkasan Skor Pematuhan", h2_style))
+    story.append(Paragraph("1. Compliance Score Summary", h2_style))
 
     grade_color = {
         "A": colors.green, "B": colors.limegreen,
@@ -54,13 +54,13 @@ def generate(
     }.get(compliance_score.grade, colors.grey)
 
     score_data = [
-        ["Framework", "Skor", "Status"],
+        ["Framework", "Score", "Status"],
         ["OWASP Top 10 (2021)", f"{compliance_score.owasp_score}/100", _status(compliance_score.owasp_score)],
         ["NACSA AI Security Framework", f"{compliance_score.nacsa_score}/100", _status(compliance_score.nacsa_score)],
         ["JPDP / PDPA 2010", f"{compliance_score.jpdp_score}/100", _status(compliance_score.jpdp_score)],
         ["MCMC CMA 1998", f"{compliance_score.mcmc_score}/100", _status(compliance_score.mcmc_score)],
-        ["AIGE Etika AI Kebangsaan", f"{compliance_score.aige_score}/100", _status(compliance_score.aige_score)],
-        ["SKOR KESELURUHAN", f"{compliance_score.overall}/100 (Gred {compliance_score.grade})", ""],
+        ["AIGE National AI Ethics", f"{compliance_score.aige_score}/100", _status(compliance_score.aige_score)],
+        ["OVERALL SCORE", f"{compliance_score.overall}/100 (Grade {compliance_score.grade})", ""],
     ]
 
     score_table = Table(score_data, colWidths=[8*cm, 4*cm, 4*cm])
@@ -83,17 +83,17 @@ def generate(
     story.append(Spacer(1, 12))
 
     # ── Prompt Stats ──────────────────────────────────────────────────────
-    story.append(Paragraph("2. Statistik Imbasan Prompt AI", h2_style))
+    story.append(Paragraph("2. AI Prompt Scan Statistics", h2_style))
     total = prompt_stats.get("total_requests", 0)
     blocked = prompt_stats.get("total_blocked", 0)
     rate = f"{(blocked/total*100):.2f}%" if total > 0 else "0%"
 
     stats_data = [
-        ["Metrik", "Nilai"],
-        ["Jumlah Imbasan Prompt", str(total)],
-        ["Ancaman Disekat", str(blocked)],
-        ["Kadar Ancaman", rate],
-        ["Status Engine", "AKTIF"],
+        ["Metric", "Value"],
+        ["Total Prompt Scans", str(total)],
+        ["Threats Blocked", str(blocked)],
+        ["Threat Rate", rate],
+        ["Engine Status", "ACTIVE"],
     ]
     stats_table = Table(stats_data, colWidths=[8*cm, 8*cm])
     stats_table.setStyle(TableStyle([
@@ -111,12 +111,12 @@ def generate(
     story.append(Spacer(1, 12))
 
     # ── CVE/CWE Vulnerabilities ───────────────────────────────────────────
-    story.append(Paragraph("3. Kelemahan CVE/CWE Dikesan", h2_style))
+    story.append(Paragraph("3. CVE/CWE Vulnerabilities Detected", h2_style))
 
     if not scan_result.vulnerabilities:
-        story.append(Paragraph("✅ Tiada kelemahan kritikal dikesan.", body_style))
+        story.append(Paragraph("✅ No critical vulnerabilities detected.", body_style))
     else:
-        vuln_data = [["CWE", "Tajuk", "Severity", "OWASP", "Lokasi"]]
+        vuln_data = [["CWE", "Title", "Severity", "OWASP", "Location"]]
         for v in scan_result.vulnerabilities:
             sev_color = {
                 "CRITICAL": colors.red, "HIGH": colors.orangered,
@@ -141,20 +141,20 @@ def generate(
     story.append(Spacer(1, 12))
 
     # ── Compliance Flags ──────────────────────────────────────────────────
-    story.append(Paragraph("4. Isu Pematuhan Perundangan Malaysia", h2_style))
+    story.append(Paragraph("4. Malaysian Legal Compliance Issues", h2_style))
 
     if not scan_result.compliance_flags:
-        story.append(Paragraph("✅ Tiada isu pematuhan dikesan.", body_style))
+        story.append(Paragraph("✅ No compliance issues detected.", body_style))
     else:
         for flag in scan_result.compliance_flags:
             story.append(Paragraph(f"<b>[{flag['ref']}]</b> {flag['title']}", warn_style))
-            story.append(Paragraph(f"Cadangan: {flag['recommendation']}", body_style))
-            story.append(Paragraph(f"Lokasi: {flag['line_hint']}", body_style))
+            story.append(Paragraph(f"Recommendation: {flag['recommendation']}", body_style))
+            story.append(Paragraph(f"Location: {flag['line_hint']}", body_style))
             story.append(Spacer(1, 4))
 
     # ── Recommendations ───────────────────────────────────────────────────
     if compliance_score.recommendations:
-        story.append(Paragraph("5. Cadangan Pembaikan", h2_style))
+        story.append(Paragraph("5. Recommendations", h2_style))
         for i, rec in enumerate(compliance_score.recommendations[:10], 1):
             story.append(Paragraph(f"{i}. {rec}", body_style))
 
@@ -162,9 +162,9 @@ def generate(
     story.append(Spacer(1, 20))
     story.append(HRFlowable(width="100%", thickness=0.5, color=colors.lightgrey))
     story.append(Paragraph(
-        "Laporan ini dijana secara automatik oleh AI Security Gateway. "
-        "Rujukan: OWASP Top 10 (2021), NACSA AI Security Framework, JPDP/PDPA 2010, "
-        "MCMC CMA 1998, AIGE Garis Panduan Etika AI Kebangsaan, MY-AI Standards.",
+        "This report was automatically generated by AI Security Gateway. "
+        "References: OWASP Top 10 (2021), NACSA AI Security Framework, JPDP/PDPA 2010, "
+        "MCMC CMA 1998, AIGE National AI Ethics Guidelines, MY-AI Standards.",
         sub_style,
     ))
 
@@ -174,8 +174,8 @@ def generate(
 
 def _status(score: float) -> str:
     if score >= 90:
-        return "✅ Patuh"
+        return "✅ Compliant"
     elif score >= 60:
-        return "⚠️ Perlu Perhatian"
+        return "⚠️ Needs Attention"
     else:
-        return "❌ Tidak Patuh"
+        return "❌ Non-Compliant"

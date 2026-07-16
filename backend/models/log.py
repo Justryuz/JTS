@@ -28,6 +28,7 @@ class PromptLog(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     confidence: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     latency_ms: Mapped[int] = mapped_column(default=0, nullable=False)
     request_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    source_page: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
 
 class AuditLog(Base, UUIDPrimaryKeyMixin):

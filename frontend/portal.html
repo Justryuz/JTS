@@ -6,16 +6,40 @@
     <title>TrustGuard — Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .tool-tab { color: #94a3b8; background: transparent; border-bottom: 2px solid transparent; transition: all .15s; }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #020c1b; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .tool-tab { color: #64748b; background: transparent; border-bottom: 2px solid transparent; transition: all .15s; }
         .tool-tab:hover { color: #e2e8f0; }
         .active-tab { color: #818cf8; border-bottom-color: #818cf8; background: rgba(99,102,241,.08); }
+        .card { background: rgba(15,23,42,0.7); border: 1px solid rgba(99,102,241,0.08); backdrop-filter: blur(8px); }
+        .card:hover { border-color: rgba(99,102,241,0.18); }
+        .stat-card-1 { background: linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(15,23,42,0.8) 60%); border: 1px solid rgba(99,102,241,0.15); }
+        .stat-card-2 { background: linear-gradient(135deg, rgba(244,63,94,0.1) 0%, rgba(15,23,42,0.8) 60%); border: 1px solid rgba(244,63,94,0.12); }
+        .stat-card-3 { background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(15,23,42,0.8) 60%); border: 1px solid rgba(16,185,129,0.12); }
+        .aurora { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background: radial-gradient(ellipse 70% 40% at 15% 0%, rgba(99,102,241,0.07) 0%, transparent 60%),
+                        radial-gradient(ellipse 50% 30% at 85% 100%, rgba(139,92,246,0.05) 0%, transparent 55%); }
+        .grid-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background-image: linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+            background-size: 48px 48px;
+            mask-image: radial-gradient(ellipse 100% 60% at 50% 0%, black 20%, transparent 70%); }
+        .nav-glass { background: rgba(2,12,27,0.85); border-bottom: 1px solid rgba(99,102,241,0.1); backdrop-filter: blur(16px); }
+        .input-field { background: rgba(2,12,27,0.8); border: 1px solid rgba(99,102,241,0.12); color: #e2e8f0; transition: border-color .15s; }
+        .input-field:focus { outline: none; border-color: rgba(99,102,241,0.5); box-shadow: 0 0 0 3px rgba(99,102,241,0.08); }
+        .btn-primary { background: linear-gradient(135deg, #6366f1, #4f46e5); transition: all .15s; }
+        .btn-primary:hover { background: linear-gradient(135deg, #818cf8, #6366f1); box-shadow: 0 0 20px rgba(99,102,241,0.3); }
+        .section-title { font-size: .65rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #6366f1; font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #020c1b; } ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 3px; }
     </style>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐛</text></svg>">
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+<body class="text-slate-100 min-h-screen">
+<div class="aurora"></div>
+<div class="grid-bg"></div>
 
 <!-- ===== LOGIN SCREEN ===== -->
-<div id="loginScreen" class="min-h-screen flex items-center justify-center px-4">
+<div id="loginScreen" class="min-h-screen flex items-center justify-center px-4 relative z-10">
     <div class="w-full max-w-sm space-y-6">
         <div class="text-center space-y-2">
             <a href="/" class="inline-block mb-2">
@@ -27,19 +51,19 @@
                 </div>
             </a>
             <h1 class="text-2xl font-bold text-white">TrustGuard</h1>
-            <p class="text-sm text-slate-400">Login or register a new account</p>
+            <p class="text-sm text-slate-500">Login or register a new account</p>
         </div>
 
         <div id="authError" class="hidden text-sm px-4 py-3 rounded-lg"></div>
 
-        <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-4">
+        <div class="card rounded-2xl p-6 space-y-4">
             <input id="authEmail" type="email" placeholder="Email"
-                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 text-sm placeholder:text-slate-600">
+                class="input-field w-full rounded-xl px-4 py-3 text-sm placeholder:text-slate-600">
             <input id="authPassword" type="password" placeholder="Password"
-                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 text-sm placeholder:text-slate-600">
+                class="input-field w-full rounded-xl px-4 py-3 text-sm placeholder:text-slate-600">
             <div class="flex gap-3 pt-1">
-                <button onclick="doLogin()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm py-2.5 rounded-lg transition-colors">Login</button>
-                <button onclick="doRegister()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium text-sm py-2.5 rounded-lg transition-colors">Register</button>
+                <button onclick="doLogin()" class="btn-primary flex-1 text-white font-semibold text-sm py-3 rounded-xl">Login</button>
+                <button onclick="doRegister()" class="flex-1 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/50 text-white font-medium text-sm py-3 rounded-xl transition-colors">Register</button>
             </div>
         </div>
         <p class="text-center text-xs text-slate-600"><a href="/" class="hover:text-slate-400 transition-colors">← Back to home</a></p>
@@ -47,57 +71,58 @@
 </div>
 
 <!-- ===== MAIN PORTAL ===== -->
-<div id="portalScreen" class="hidden">
+<div id="portalScreen" class="hidden relative z-10">
 
-    <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
+    <nav class="nav-glass sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="bg-indigo-600/20 border border-indigo-500/30 p-2 rounded-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
                 </div>
-                <span class="font-bold text-lg tracking-wider text-white">TrustGuard</span>
+                <span class="font-bold text-lg tracking-wide text-white">TrustGuard</span>
+                <span class="mono text-xs text-indigo-500/60 hidden sm:block">v2.0</span>
             </div>
             <div class="flex items-center gap-4">
-                <span id="navEmail" class="text-sm text-slate-400"></span>
-                <button onclick="doLogout()" id="btnLogout" class="text-xs text-slate-500 hover:text-rose-400 transition-colors">Logout</button>
+                <span id="navEmail" class="text-xs text-slate-500 mono hidden sm:block"></span>
+                <button onclick="doLogout()" class="text-xs text-slate-600 hover:text-rose-400 transition-colors mono">[ logout ]</button>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
         <!-- STATS -->
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-slate-800/50 border border-slate-700/60 p-6 rounded-xl space-y-2">
-                <p class="text-sm text-slate-400 font-medium">Total Prompt Scans</p>
-                <p id="statTotal" class="text-3xl font-bold text-white">—</p>
-                <span class="text-xs text-emerald-400 font-medium">Overall total</span>
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="stat-card-1 rounded-2xl p-6 space-y-3">
+                <p class="section-title">Total Prompt Scans</p>
+                <p id="statTotal" class="text-4xl font-black text-white mono">—</p>
+                <span class="text-xs text-indigo-400/70 mono">overall total</span>
             </div>
-            <div class="bg-slate-800/50 border border-slate-700/60 p-6 rounded-xl space-y-2">
-                <p class="text-sm text-slate-400 font-medium">Threats Detected & Blocked</p>
-                <p id="statBlocked" class="text-3xl font-bold text-rose-500">—</p>
-                <span id="statRate" class="text-xs text-rose-400 font-medium">Threat rate: —</span>
+            <div class="stat-card-2 rounded-2xl p-6 space-y-3">
+                <p class="section-title" style="color:#f43f5e">Threats Blocked</p>
+                <p id="statBlocked" class="text-4xl font-black text-rose-400 mono">—</p>
+                <span id="statRate" class="text-xs text-rose-500/70 mono">threat rate: —</span>
             </div>
-            <div class="bg-slate-800/50 border border-slate-700/60 p-6 rounded-xl space-y-2">
-                <p class="text-sm text-slate-400 font-medium">AI Guard Engine Status</p>
+            <div class="stat-card-3 rounded-2xl p-6 space-y-3">
+                <p class="section-title" style="color:#10b981">Engine Status</p>
                 <div class="flex items-center gap-2 pt-1">
-                    <span class="h-3 w-3 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <p class="text-xl font-semibold text-emerald-400">Active & Secure</p>
+                    <span class="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <p class="text-xl font-bold text-emerald-400 mono">ACTIVE</p>
                 </div>
-                <span class="text-xs text-slate-500">TrustGuard Detection Engine</span>
+                <span class="text-xs text-emerald-600/70 mono">TrustGuard Detection Engine</span>
             </div>
         </section>
 
         <!-- API KEY MANAGEMENT -->
-        <section class="bg-slate-800/40 border border-slate-800 rounded-xl p-6 space-y-6">
+        <section class="card rounded-2xl p-6 space-y-6">
             <div>
-                <h2 class="text-xl font-bold text-white">API Key & Domain Management</h2>
-                <p class="text-sm text-slate-400">Register your application/CMS domain to generate an API Key. The engine only accepts requests from verified domains.</p>
+                <p class="section-title mb-1">API Key & Domain Management</p>
+                <p class="text-sm text-slate-500">Register your domain to generate an API Key. The engine only accepts requests from verified domains.</p>
             </div>
-            <form id="keyForm" class="flex flex-col sm:flex-row gap-4 max-w-2xl">
-                <input type="text" id="domainInput" required placeholder=" www.domain.com"
-                    class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 placeholder:text-slate-600 text-sm">
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm px-6 py-2.5 rounded-lg transition-colors">Generate New API Key</button>
+            <form id="keyForm" class="flex flex-col sm:flex-row gap-3 max-w-2xl">
+                <input type="text" id="domainInput" required placeholder="www.domain.com"
+                    class="input-field flex-1 rounded-xl px-4 py-2.5 text-sm placeholder:text-slate-600">
+                <button type="submit" class="btn-primary text-white font-semibold text-sm px-6 py-2.5 rounded-xl whitespace-nowrap">Generate API Key</button>
             </form>
 
             <div id="keyDisplayBox" class="hidden bg-indigo-950/40 border border-indigo-800 p-4 rounded-lg space-y-3">
@@ -149,38 +174,38 @@
             </div>
 
             <div id="keysTableWrap" class="hidden space-y-3">
-                <h3 class="text-sm font-semibold text-slate-300">Active API Keys</h3>
-                <div class="overflow-x-auto rounded-lg border border-slate-700">
+                <p class="section-title">Active API Keys</p>
+                <div class="overflow-x-auto rounded-xl border border-indigo-900/20">
                     <table class="w-full text-sm text-left">
-                        <thead class="bg-slate-900/60 text-slate-400 border-b border-slate-700">
+                        <thead class="bg-indigo-950/30 text-slate-500 border-b border-indigo-900/20">
                             <tr>
-                                <th class="p-3 font-medium">Domain</th>
-                                <th class="p-3 font-medium">Status</th>
-                                <th class="p-3 font-medium">Created</th>
-                                <th class="p-3 font-medium">Action</th>
+                                <th class="p-3 font-medium mono text-xs">Domain</th>
+                                <th class="p-3 font-medium mono text-xs">Status</th>
+                                <th class="p-3 font-medium mono text-xs">Created</th>
+                                <th class="p-3 font-medium mono text-xs">Action</th>
                             </tr>
                         </thead>
-                        <tbody id="keysTableBody" class="divide-y divide-slate-800 text-slate-300"></tbody>
+                        <tbody id="keysTableBody" class="divide-y divide-indigo-900/10 text-slate-300"></tbody>
                     </table>
                 </div>
             </div>
         </section>
 
         <!-- SECURITY TOOLS -->
-        <section class="bg-slate-800/40 border border-slate-800 rounded-xl overflow-hidden">
-            <div class="p-6 border-b border-slate-800">
-                <h2 class="text-xl font-bold text-white">Security Tools</h2>
-                <p class="text-sm text-slate-400">Test the shield, scan code, a repo, a URL, or upload a ZIP project using your API Key.</p>
+        <section class="card rounded-2xl overflow-hidden">
+            <div class="p-6 border-b border-indigo-900/20">
+                <p class="section-title mb-1">Security Tools</p>
+                <p class="text-sm text-slate-500">Test the shield, scan code, a repo, a URL, or upload a ZIP project using your API Key.</p>
             </div>
 
             <!-- API KEY SELECTOR -->
-            <div class="px-6 pt-4 pb-2 flex flex-col sm:flex-row gap-3 items-start sm:items-center border-b border-slate-800">
-                <label class="text-xs text-slate-400 whitespace-nowrap">API Key:</label>
-                <select id="toolApiKey" class="flex-1 max-w-sm bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500">
+            <div class="px-6 pt-4 pb-3 flex flex-col sm:flex-row gap-3 items-start sm:items-center border-b border-indigo-900/20">
+                <label class="text-xs text-slate-500 mono whitespace-nowrap">API Key:</label>
+                <select id="toolApiKey" class="input-field flex-1 max-w-sm rounded-lg px-3 py-2 text-xs">
                     <option value="">— Select API Key —</option>
                 </select>
-                <label class="text-xs text-slate-400 whitespace-nowrap">Domain:</label>
-                <select id="toolDomain" class="flex-1 max-w-sm bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500">
+                <label class="text-xs text-slate-500 mono whitespace-nowrap">Domain:</label>
+                <select id="toolDomain" class="input-field flex-1 max-w-sm rounded-lg px-3 py-2 text-xs">
                     <option value="">— Select Domain —</option>
                 </select>
             </div>
@@ -263,39 +288,40 @@
         </section>
 
         <!-- SECURITY LOGS -->
-        <section class="bg-slate-800/40 border border-slate-800 rounded-xl overflow-hidden">
-            <div class="p-6 border-b border-slate-800 flex items-center justify-between">
+        <section class="card rounded-2xl overflow-hidden">
+            <div class="p-6 border-b border-indigo-900/20 flex items-center justify-between">
                 <div>
-                    <h2 class="text-xl font-bold text-white">Real-Time Security Monitoring Log</h2>
-                    <p class="text-sm text-slate-400">Detailed analysis of AI model exploitation attempts.</p>
+                    <p class="section-title mb-1">Real-Time Security Log</p>
+                    <p class="text-sm text-slate-500">Detailed analysis of AI model exploitation attempts.</p>
                 </div>
-                <button onclick="loadLogs()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg transition-colors">↻ Refresh</button>
+                <button onclick="loadLogs()" class="text-xs mono text-indigo-500 hover:text-indigo-300 transition-colors">[ ↻ refresh ]</button>
             </div>
             <!-- ENGINE UPDATE -->
-            <div class="p-6 border-b border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="p-6 border-b border-indigo-900/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h2 class="text-xl font-bold text-white">Detection Engine Update</h2>
-                    <p class="text-sm text-slate-400">Update latest OWASP rule patterns &amp; refresh ML models from HuggingFace.</p>
+                    <p class="section-title mb-1">Detection Engine Update</p>
+                    <p class="text-sm text-slate-500">Update OWASP rule patterns &amp; refresh ML models from HuggingFace.</p>
                 </div>
-                <div class="flex gap-3">
-                    <button onclick="updateEngine(true, false)" class="text-xs bg-indigo-700 hover:bg-indigo-600 px-4 py-2 rounded-lg transition-colors font-medium">↑ Update Rules</button>
-                    <button onclick="updateEngine(false, true)" class="text-xs bg-violet-700 hover:bg-violet-600 px-4 py-2 rounded-lg transition-colors font-medium">↑ Refresh Models</button>
-                    <button onclick="updateEngine(true, true)" class="text-xs bg-emerald-700 hover:bg-emerald-600 px-4 py-2 rounded-lg transition-colors font-medium">↑ Update All</button>
+                <div class="flex gap-2">
+                    <button onclick="updateEngine(true, false)" class="text-xs mono bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-800/50 text-indigo-400 px-3 py-1.5 rounded-lg transition-colors">↑ Rules</button>
+                    <button onclick="updateEngine(false, true)" class="text-xs mono bg-violet-950/60 hover:bg-violet-900/60 border border-violet-800/50 text-violet-400 px-3 py-1.5 rounded-lg transition-colors">↑ Models</button>
+                    <button onclick="updateEngine(true, true)" class="text-xs mono bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-800/50 text-emerald-400 px-3 py-1.5 rounded-lg transition-colors">↑ All</button>
                 </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-sm">
                     <thead>
-                        <tr class="bg-slate-900/60 text-slate-400 border-b border-slate-800">
-                            <th class="p-4 font-medium">Time/Date</th>
-                            <th class="p-4 font-medium">Origin Domain</th>
-                            <th class="p-4 font-medium">Prompt Input Text</th>
-                            <th class="p-4 font-medium">Attack Type</th>
-                            <th class="p-4 font-medium">Action</th>
+                        <tr class="bg-indigo-950/20 text-slate-500 border-b border-indigo-900/20">
+                            <th class="p-4 font-medium mono text-xs">Time/Date</th>
+                            <th class="p-4 font-medium mono text-xs">Origin Domain</th>
+                            <th class="p-4 font-medium mono text-xs">Source Page</th>
+                            <th class="p-4 font-medium mono text-xs">Prompt Input Text</th>
+                            <th class="p-4 font-medium mono text-xs">Attack Type</th>
+                            <th class="p-4 font-medium mono text-xs">Action</th>
                         </tr>
                     </thead>
                     <tbody id="logsTableBody" class="divide-y divide-slate-800/60 text-slate-300">
-                        <tr><td colspan="5" class="p-8 text-center text-slate-500 text-sm">No logs yet. Send a request via /api/v1/shield to see logs.</td></tr>
+                        <tr><td colspan="6" class="p-8 text-center text-slate-500 text-sm">No logs yet. Send a request via /api/v1/shield to see logs.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -303,10 +329,10 @@
 
     </main>
 
-    <footer class="border-t border-slate-800 mt-12 py-6">
+    <footer class="border-t border-indigo-900/20 mt-8 py-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <span class="text-xs text-slate-500">TrustGuard — AI Security Gateway</span>
-            <span class="text-xs text-slate-600">Made with ❤️ from Sungai Buloh, Malaysia</span>
+            <span class="mono text-xs text-slate-600">TrustGuard — AI Security Gateway</span>
+            <span class="mono text-xs text-slate-700">Made with ❤️ from Sungai Buloh, Malaysia</span>
         </div>
     </footer>
 </div>
@@ -429,12 +455,13 @@
         if (!res.ok) return;
         const logs = await res.json();
         const tbody = document.getElementById('logsTableBody');
-        if (logs.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-500 text-sm">No logs yet.</td></tr>'; return; }
+        if (logs.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-500 text-sm">No logs yet.</td></tr>'; return; }
         tbody.innerHTML = logs.map(l => {
             const blocked = l.status === 'BLOCKED';
             return `<tr class="hover:bg-slate-800/20 transition-colors">
                 <td class="p-4 font-mono text-xs text-slate-500">${new Date(l.created_at).toLocaleString('en-US')}</td>
                 <td class="p-4 text-slate-400">${l.source_domain}</td>
+                <td class="p-4 font-mono text-xs text-slate-500">${l.source_page ? escHtml(l.source_page) : '<span class="text-slate-700">—</span>'}</td>
                 <td class="p-4 max-w-xs truncate font-mono text-xs ${blocked ? 'text-rose-300 bg-rose-950/10' : 'text-slate-400'} rounded">"${escHtml(l.input_text)}"</td>
                 <td class="p-4"><span class="px-2 py-0.5 text-xs font-semibold rounded-full ${blocked ? 'bg-rose-950 text-rose-400 border border-rose-900' : 'bg-slate-900 text-slate-500'}">${l.attack_type}</span></td>
                 <td class="p-4">${blocked ? '<span class="text-rose-500 font-bold text-xs">BLOCKED</span>' : '<span class="text-emerald-500 font-bold text-xs">ALLOWED</span>'}</td>

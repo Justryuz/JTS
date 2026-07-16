@@ -167,7 +167,7 @@ Register a new user account. Password minimum 8 characters.
 { "message": "User registered successfully" }
 
 // Response 409 — email already registered
-{ "detail": "Emel user@example.com telah didaftarkan." }
+{ "detail": "Email user@example.com is already registered." }
 ```
 
 #### `POST /portal/auth/login`
@@ -181,7 +181,21 @@ Log in and retrieve JWT tokens.
 { "access_token": "eyJ...", "refresh_token": "eyJ...", "token_type": "bearer" }
 
 // Response 401 — invalid credentials
-{ "detail": "Emel atau kata laluan tidak betul." }
+{ "detail": "Invalid email or password." }
+```
+
+#### `POST /portal/auth/refresh`
+Exchange a valid refresh token for a new access token.
+
+```json
+// Request
+{ "refresh_token": "eyJ..." }
+
+// Response 200
+{ "access_token": "eyJ...", "refresh_token": "eyJ...", "token_type": "bearer" }
+
+// Response 401 — expired or invalid
+{ "detail": "Refresh token has expired. Please log in again." }
 ```
 
 ---
@@ -276,8 +290,11 @@ Headers: `X-API-Key: aisec_live_xxx` and `X-Origin-Domain: domain.com`
 Scan an AI prompt for threats.
 
 ```json
-// Request
+// Request (source_page optional — fallback to HTTP Referer header)
 { "prompt": "user prompt text" }
+
+// Request with explicit source tracking
+{ "prompt": "user prompt text", "source_page": "chat_room_page" }
 
 // Response — Safe
 { "status": "ALLOWED" }
@@ -460,6 +477,19 @@ if response.json()["status"] == "BLOCKED":
 | `engines/ml_engine.py` | Added `mrm8488/codebert-base-finetuned-detect-insecure-code` — ML-based insecure code detection |
 | `engines/ml_engine.py` | Added `scan_code()` function for CodeBERT code scanning |
 | `scanners/cve_scanner.py` | Integrated `ml_engine.scan_code()` into `scan_code()` for hybrid code scanning |
+| `models/log.py` | Added `source_page` column to `PromptLog` — tracks which page the attack originated from |
+| `schemas/gateway.py` | Added optional `source_page` field to `ShieldRequest` |
+| `repositories/log_repo.py` | Added `source_page` parameter to `create_prompt_log()` |
+| `main.py` | Added ML model warm-up on startup — background thread pre-loads all 5 HuggingFace models |
+| `api/v1/auth.py` | Added `POST /portal/auth/refresh` endpoint — exchange refresh token for new access token |
+| `services/auth_service.py` | All error descriptions translated to English |
+| `utils/jwt_utils.py` | All error descriptions translated to English |
+| `services/api_key_service.py` | All error descriptions translated to English |
+| `reports/pdf_generator.py` | All Malay text translated to English — PDF report now fully English |
+| `api/v1/report.py` | Summary translated to English |
+| `ingest/zip_ingest.py` | All error messages translated to English — fixes `test_security.py` path traversal assertion |
+| `ingest/github_ingest.py` | All error messages translated to English |
+| `utils/domain_verify.py` | Verification instructions translated to English |
 
 ---
 

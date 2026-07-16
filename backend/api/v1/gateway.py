@@ -32,8 +32,8 @@ def _api_key_service(db: Session = Depends(get_db)) -> ApiKeyService:
     "/api/v1/shield",
     summary="Shield prompt AI",
     description=(
-        "Imbas prompt sebelum dihantar ke model LLM. "
-        "Mengesan Prompt Injection, Jailbreak, Encoding Attack, dan ancaman OWASP LLM Top 10."
+        "Scan prompt before sending to LLM model. "
+        "Detects Prompt Injection, Jailbreak, Encoding Attacks, and OWASP LLM Top 10 threats."
     ),
 )
 def shield(
@@ -60,6 +60,11 @@ def shield(
     # Run detection
     result = _shield_service.scan(body.prompt, body.engine_mode.value)
 
+    # Resolve source_page: body field takes priority, fallback to Referer header
+    source_page = body.source_page or request.headers.get("referer") or None
+    if source_page:
+        source_page = source_page[:500]
+
     # Persist log
     log_repo = LogRepository(db)
     log_repo.create_prompt_log(
@@ -72,6 +77,7 @@ def shield(
         confidence=result["confidence"],
         latency_ms=result["latency_ms"],
         request_id=request_id,
+        source_page=source_page,
     )
 
     # v1 backward-compatible response format

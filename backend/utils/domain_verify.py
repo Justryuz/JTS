@@ -7,8 +7,8 @@ import httpx
 
 def build_verification_instructions(domain: str, token: str) -> str:
     return (
-        f"Simpan token ini di https://{domain}/.well-known/trustguard.txt\n"
-        f"Kandungan fail mesti sama dengan token berikut:\n{token}"
+        f"Save this token at https://{domain}/.well-known/trustguard.txt\n"
+        f"The file content must exactly match the following token:\n{token}"
     )
 
 

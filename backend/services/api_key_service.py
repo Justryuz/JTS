@@ -51,9 +51,9 @@ class ApiKeyService:
     def verify_domain(self, key_id: str, user_id: str, target_url: str | None, repo_url: str | None, branch: str) -> dict:
         api_key = self._repo.get_active_by_id(key_id, user_id)
         if not api_key:
-            raise ApiKeyError(ErrorCode.API_KEY_NOT_FOUND, "API Key Not Found", "API key tidak dijumpai.")
+            raise ApiKeyError(ErrorCode.API_KEY_NOT_FOUND, "API Key Not Found", "API key not found.")
         if api_key.is_verified:
-            raise ApiKeyError(ErrorCode.DOMAIN_ALREADY_VERIFIED, "Domain Already Verified", "Domain ini telah disahkan.")
+            raise ApiKeyError(ErrorCode.DOMAIN_ALREADY_VERIFIED, "Domain Already Verified", "This domain has already been verified.")
 
         domain = api_key.allowed_domain
         url = (target_url or f"https://{domain}").rstrip("/")
@@ -63,8 +63,8 @@ class ApiKeyService:
             raise ApiKeyError(
                 ErrorCode.DOMAIN_VERIFICATION_FAILED,
                 "Domain Verification Failed",
-                "Fail trustguard.txt tidak ditemui atau token tidak sepadan.",
-                "Pastikan fail boleh dicapai dan mengandungi token yang betul.",
+                "trustguard.txt file not found or token mismatch.",
+                "Ensure the file is accessible and contains the correct token.",
             )
 
         self._repo.mark_verified(api_key, datetime.now(timezone.utc))
@@ -83,7 +83,7 @@ class ApiKeyService:
     def revoke(self, key_id: str, user_id: str) -> None:
         api_key = self._repo.get_by_id(key_id, user_id)
         if not api_key:
-            raise ApiKeyError(ErrorCode.API_KEY_NOT_FOUND, "API Key Not Found", "API key tidak dijumpai.")
+            raise ApiKeyError(ErrorCode.API_KEY_NOT_FOUND, "API Key Not Found", "API key not found.")
         self._repo.revoke(api_key)
 
     def validate_for_request(self, raw_key: str, origin_domain: str):

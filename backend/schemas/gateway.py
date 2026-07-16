@@ -14,6 +14,7 @@ from config.constants import EngineMode
 class ShieldRequest(BaseModel):
     prompt: str = Field(min_length=1, max_length=10_000)
     engine_mode: EngineMode = EngineMode.HYBRID
+    source_page: str | None = Field(default=None, max_length=500)
 
     @field_validator("prompt")
     @classmethod

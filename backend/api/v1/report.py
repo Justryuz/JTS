@@ -18,7 +18,7 @@ from utils.jwt_utils import get_current_user_id
 router = APIRouter(prefix="/portal", tags=["Compliance"])
 
 
-@router.post("/report/pdf", summary="Jana laporan audit PDF")
+@router.post("/report/pdf", summary="Generate PDF audit report")
 def generate_pdf_report(
     body: CodeScanRequest,
     user_id: str = Depends(get_current_user_id),

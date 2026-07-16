@@ -43,7 +43,7 @@ def _validate_key(
         })
 
 
-@router.post("/api/v1/scan/code", summary="Imbas kod sumber")
+@router.post("/api/v1/scan/code", summary="Scan source code")
 def scan_code(
     body: CodeScanRequest,
     request: Request,
@@ -87,7 +87,7 @@ def scan_code(
     }
 
 
-@router.post("/api/v1/scan/repo", summary="Imbas repo GitHub")
+@router.post("/api/v1/scan/repo", summary="Scan GitHub repository")
 def scan_repo(
     body: RepoScanRequest,
     request: Request,
@@ -118,7 +118,7 @@ def scan_repo(
     )
 
 
-@router.post("/api/v1/scan/url", summary="Imbas URL langsung")
+@router.post("/api/v1/scan/url", summary="Scan live URL")
 def scan_url(
     body: UrlScanRequest,
     request: Request,
@@ -133,7 +133,7 @@ def scan_url(
     return result
 
 
-@router.post("/api/v1/scan/upload", summary="Imbas ZIP upload")
+@router.post("/api/v1/scan/upload", summary="Scan ZIP upload")
 async def scan_upload(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -147,8 +147,8 @@ async def scan_upload(
 
     if not file.filename or not file.filename.endswith(".zip"):
         raise HTTPException(status_code=422, detail={"code": ErrorCode.ZIP_INVALID,
-                                                      "title": "Invalid File", "description": "Hanya fail .zip dibenarkan.",
-                                                      "recommendation": "Muat naik fail ZIP yang sah.", "reference": ""})
+                                                      "title": "Invalid File", "description": "Only .zip files are allowed.",
+                                                      "recommendation": "Upload a valid ZIP file.", "reference": ""})
 
     file_bytes = await file.read()
     log_repo = LogRepository(db)
@@ -168,7 +168,7 @@ async def scan_upload(
     )
 
 
-@router.get("/api/v1/scan/status/{job_id}", summary="Semak status scan job")
+@router.get("/api/v1/scan/status/{job_id}", summary="Check scan job status")
 def get_scan_status(
     job_id: str,
     request: Request,
@@ -178,7 +178,7 @@ def get_scan_status(
     job = LogRepository(db).get_scan_job(job_id, user_id)
     if not job:
         raise HTTPException(status_code=404, detail={"code": "TG-4008", "title": "Job Not Found",
-                                                      "description": "Scan job tidak dijumpai.", "recommendation": "", "reference": ""})
+                                                      "description": "Scan job not found.", "recommendation": "", "reference": ""})
     data = {"job_id": job.id, "status": job.status, "scan_type": job.scan_type, "target": job.target}
     if job.status == "COMPLETED" and job.result_json:
         data["result"] = json.loads(job.result_json)

@@ -19,7 +19,7 @@ class UpdateRequest(BaseModel):
     update_models: bool = True
 
 
-@router.post("/update", summary="Kemas kini enjin keselamatan")
+@router.post("/update", summary="Update detection engine")
 def update_engine(
     body: UpdateRequest,
     request: Request,

@@ -29,7 +29,7 @@ def _key_service(db: Session = Depends(get_db)) -> ApiKeyService:
     return ApiKeyService(ApiKeyRepository(db))
 
 
-@router.post("/api-key/generate", status_code=201, summary="Jana API Key baru")
+@router.post("/api-key/generate", status_code=201, summary="Generate new API Key")
 def generate_api_key(
     body: GenerateKeyRequest,
     request: Request,
@@ -40,7 +40,7 @@ def generate_api_key(
     return service.generate(user_id, body.allowed_domain)
 
 
-@router.get("/api-keys", summary="Senarai kunci API")
+@router.get("/api-keys", summary="List API keys")
 def list_api_keys(
     request: Request,
     user_id: str = Depends(get_current_user_id),
@@ -62,7 +62,7 @@ def list_api_keys(
     ]
 
 
-@router.get("/api-key/{key_id}", summary="Status API key")
+@router.get("/api-key/{key_id}", summary="Get API key status")
 def get_api_key_status(
     key_id: str,
     request: Request,
@@ -73,7 +73,7 @@ def get_api_key_status(
     key = ApiKeyRepository(db).get_by_id(key_id, user_id)
     if not key:
         raise HTTPException(status_code=404, detail={"code": ErrorCode.API_KEY_NOT_FOUND,
-                                                      "title": "Not Found", "description": "API key tidak dijumpai.",
+                                                      "title": "Not Found", "description": "API key not found.",
                                                       "recommendation": "", "reference": ""})
     return StandardResponse(
         message="API key status retrieved",
@@ -138,7 +138,7 @@ def revoke_api_key(
                                                       "recommendation": e.recommendation, "reference": ""})
 
 
-@router.get("/logs", summary="Log keselamatan")
+@router.get("/logs", summary="Security logs")
 def get_logs(
     request: Request,
     user_id: str = Depends(get_current_user_id),
@@ -152,6 +152,7 @@ def get_logs(
         {
             "id": l.id,
             "source_domain": l.source_domain,
+            "source_page": l.source_page,
             "input_text": l.input_text,
             "status": l.status,
             "attack_type": l.attack_type,
@@ -163,7 +164,7 @@ def get_logs(
     ]
 
 
-@router.get("/stats", summary="Statistik penggunaan")
+@router.get("/stats", summary="Usage statistics")
 def get_stats(
     request: Request,
     user_id: str = Depends(get_current_user_id),
@@ -174,7 +175,7 @@ def get_stats(
     return {"total_requests": total, "total_blocked": blocked, "engine_status": "ACTIVE"}
 
 
-@router.get("/compliance/{domain}", summary="Skor pematuhan domain")
+@router.get("/compliance/{domain}", summary="Domain compliance score")
 def get_compliance(
     domain: str,
     request: Request,

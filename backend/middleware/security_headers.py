@@ -23,8 +23,9 @@ SECURITY_HEADERS = {
         "script-src-elem 'self' 'unsafe-inline' cdn.tailwindcss.com cdn.jsdelivr.net; "
         "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net fonts.googleapis.com; "
         "style-src-elem 'self' 'unsafe-inline' cdn.jsdelivr.net fonts.googleapis.com; "
-        "font-src 'self' fonts.gstatic.com fonts.googleapis.com; "
-        "img-src 'self' data: fastapi.tiangolo.com; "
+        "font-src 'self' fonts.gstatic.com fonts.googleapis.com cdn.jsdelivr.net; "
+        "img-src 'self' data: fastapi.tiangolo.com cdn.jsdelivr.net; "
+        "worker-src blob:; "
         "connect-src 'self';"
     ),
 }

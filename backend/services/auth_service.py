@@ -37,8 +37,8 @@ class AuthService:
             raise AuthError(
                 code=ErrorCode.EMAIL_ALREADY_REGISTERED,
                 title="Email Already Registered",
-                description=f"Emel {email} telah didaftarkan.",
-                recommendation="Gunakan emel lain atau log masuk.",
+                description=f"Email {email} is already registered.",
+                recommendation="Use a different email or log in.",
             )
         password_hash = _pwd_context.hash(password)
         user = self._repo.create(email=email, password_hash=password_hash)
@@ -50,16 +50,16 @@ class AuthService:
             raise AuthError(
                 code=ErrorCode.INVALID_CREDENTIALS,
                 title="Invalid Credentials",
-                description="Emel atau kata laluan tidak betul.",
-                recommendation="Semak emel dan kata laluan anda.",
+                description="Invalid email or password.",
+                recommendation="Check your email and password.",
                 reference="OWASP ASVS 2.1",
             )
         if not user.is_active:
             raise AuthError(
                 code=ErrorCode.INSUFFICIENT_PERMISSION,
                 title="Account Disabled",
-                description="Akaun anda telah dinyahaktifkan.",
-                recommendation="Hubungi pentadbir sistem.",
+                description="Your account has been deactivated.",
+                recommendation="Contact your system administrator.",
             )
         access_token = create_access_token(user.id, user.role)
         refresh_token = create_refresh_token(user.id)

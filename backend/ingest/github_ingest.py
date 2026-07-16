@@ -83,12 +83,12 @@ def scan_github_repo(repo_url: str, branch: str = "main") -> dict:
             f.stat().st_size for f in Path(tmp_dir).rglob("*") if f.is_file()
         ) / (1024 * 1024)
         if total_size_mb > MAX_REPO_SIZE_MB:
-            return {"error": f"Repo terlalu besar ({total_size_mb:.0f}MB). Had: {MAX_REPO_SIZE_MB}MB."}
+            return {"error": f"Repository too large ({total_size_mb:.0f}MB). Limit: {MAX_REPO_SIZE_MB}MB."}
 
-        # Kumpul fail
+        # Collect files
         files = _collect_files(tmp_dir)
         if len(files) > MAX_FILES:
-            return {"error": f"Repo mempunyai terlalu banyak fail ({len(files)}). Had: {MAX_FILES} fail."}
+            return {"error": f"Repository has too many files ({len(files)}). Limit: {MAX_FILES}."}
 
         file_contents = {rel: Path(tmp_dir, rel).read_text(errors="ignore") for rel in files}
         file_results = _scan_files(file_contents)
@@ -101,13 +101,13 @@ def scan_github_repo(repo_url: str, branch: str = "main") -> dict:
         )
 
     except subprocess.TimeoutExpired:
-        return {"error": "Scan tamat masa (timeout 60s). Cuba repo yang lebih kecil."}
+        return {"error": "Scan timed out (60s). Try a smaller repository."}
     except subprocess.CalledProcessError as e:
         logger.error(f"Git clone failed: {e.stderr}")
-        return {"error": "Gagal clone repo. Pastikan URL betul dan repo adalah public."}
+        return {"error": "Failed to clone repository. Ensure the URL is correct and the repo is public."}
     except Exception as e:
         logger.error(f"github_ingest error: {e}")
-        return {"error": "Ralat semasa scan. Sila cuba lagi."}
+        return {"error": "Error during scan. Please try again."}
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
 

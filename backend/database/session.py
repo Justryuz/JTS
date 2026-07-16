@@ -85,6 +85,8 @@ def run_migrations() -> None:
         ("users", "is_active", "ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT 1"),
         # scan_jobs
         ("scan_jobs", "result_json", "ALTER TABLE scan_jobs ADD COLUMN result_json TEXT"),
+        # prompt_logs
+        ("prompt_logs", "source_page", "ALTER TABLE prompt_logs ADD COLUMN source_page TEXT"),
     ]
 
     with engine.connect() as conn:

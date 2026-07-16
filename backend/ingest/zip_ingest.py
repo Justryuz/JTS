@@ -32,18 +32,18 @@ def scan_zip_upload(file_bytes: bytes) -> dict:
     try:
         # Validate ZIP
         if not zipfile.is_zipfile(io.BytesIO(file_bytes)):
-            return {"error": "Fail bukan format ZIP yang sah."}
+            return {"error": "File is not a valid ZIP format."}
 
         with zipfile.ZipFile(io.BytesIO(file_bytes)) as zf:
             # Zip bomb check
             total_size = sum(i.file_size for i in zf.infolist())
             if total_size > MAX_EXTRACTED_MB * 1024 * 1024:
-                return {"error": f"ZIP terlalu besar selepas extract ({total_size // (1024*1024)}MB). Had: {MAX_EXTRACTED_MB}MB."}
+                return {"error": f"ZIP too large after extraction ({total_size // (1024*1024)}MB). Limit: {MAX_EXTRACTED_MB}MB."}
 
-            # Path traversal check dalam ZIP
+            # Path traversal check
             for member in zf.namelist():
                 if ".." in member or member.startswith("/"):
-                    return {"error": "ZIP mengandungi laluan berbahaya (path traversal)."}
+                    return {"error": "ZIP contains dangerous paths (path traversal detected)."}
 
             zf.extractall(tmp_dir)
 
@@ -59,7 +59,7 @@ def scan_zip_upload(file_bytes: bytes) -> dict:
                 files.append(str(f.relative_to(base)))
 
         if len(files) > MAX_FILES:
-            return {"error": f"ZIP mengandungi terlalu banyak fail ({len(files)}). Had: {MAX_FILES}."}
+            return {"error": f"ZIP contains too many files ({len(files)}). Limit: {MAX_FILES}."}
 
         file_contents = {rel: Path(tmp_dir, rel).read_text(errors="ignore") for rel in files}
 
@@ -82,9 +82,9 @@ def scan_zip_upload(file_bytes: bytes) -> dict:
         )
 
     except zipfile.BadZipFile:
-        return {"error": "Fail ZIP rosak atau tidak sah."}
+        return {"error": "ZIP file is corrupted or invalid."}
     except Exception as e:
         logger.error(f"zip_ingest error: {e}")
-        return {"error": "Ralat semasa scan ZIP. Sila cuba lagi."}
+        return {"error": "Error during ZIP scan. Please try again."}
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)

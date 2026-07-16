@@ -47,16 +47,16 @@ def decode_token(token: str) -> dict:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"code": ErrorCode.TOKEN_EXPIRED, "title": "Token Expired",
-                    "description": "JWT token telah tamat tempoh.",
-                    "recommendation": "Log masuk semula untuk mendapatkan token baru.",
+                    "description": "JWT token has expired.",
+                    "recommendation": "Log in again to obtain a new token.",
                     "reference": "RFC 7519"},
         )
     except jwt.InvalidTokenError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"code": ErrorCode.TOKEN_INVALID, "title": "Token Invalid",
-                    "description": "JWT token tidak sah atau telah diubah.",
-                    "recommendation": "Pastikan token dihantar dengan betul dalam Authorization header.",
+                    "description": "JWT token is invalid or has been tampered with.",
+                    "recommendation": "Ensure the token is sent correctly in the Authorization header.",
                     "reference": "RFC 7519"},
         )
 

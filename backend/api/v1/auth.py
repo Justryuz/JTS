@@ -6,14 +6,17 @@ Standards: Part 3 §26, §27
 
 from __future__ import annotations
 
+import jwt as pyjwt
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+from config.settings import get_settings
 from database.session import get_db
 from repositories.user_repo import UserRepository
-from schemas.auth import LoginRequest, RegisterRequest, TokenResponse
-from schemas.common import StandardResponse
+from schemas.auth import LoginRequest, RefreshRequest, RegisterRequest
 from services.auth_service import AuthError, AuthService
+from utils.jwt_utils import create_access_token, create_refresh_token
 
 router = APIRouter(prefix="/portal/auth", tags=["Auth"])
 
@@ -25,8 +28,8 @@ def _auth_service(db: Session = Depends(get_db)) -> AuthService:
 @router.post(
     "/register",
     status_code=201,
-    summary="Daftar pengguna baru",
-    description="Buat akaun pengguna baru. Kata laluan mesti sekurang-kurangnya 8 aksara, mengandungi huruf besar dan nombor.",
+    summary="Register new user",
+    description="Create a new user account. Password must be at least 8 characters.",
 )
 def register(body: RegisterRequest, request: Request, service: AuthService = Depends(_auth_service)):
     try:
@@ -38,8 +41,8 @@ def register(body: RegisterRequest, request: Request, service: AuthService = Dep
 
 @router.post(
     "/login",
-    summary="Log masuk pengguna",
-    description="Dapatkan JWT access token dan refresh token.",
+    summary="User login",
+    description="Obtain JWT access token and refresh token.",
 )
 def login(body: LoginRequest, request: Request, service: AuthService = Depends(_auth_service)):
     try:
@@ -51,3 +54,32 @@ def login(body: LoginRequest, request: Request, service: AuthService = Depends(_
         }
     except AuthError as e:
         raise HTTPException(status_code=401, detail=str(e.description))
+
+
+@router.post(
+    "/refresh",
+    summary="Refresh access token",
+    description="Exchange a valid refresh token for a new access token.",
+)
+def refresh_token(body: RefreshRequest, db: Session = Depends(get_db)):
+    settings = get_settings()
+    try:
+        payload = pyjwt.decode(body.refresh_token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+    except pyjwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Refresh token has expired. Please log in again.")
+    except pyjwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid refresh token.")
+
+    if payload.get("type") != "refresh":
+        raise HTTPException(status_code=401, detail="Invalid token type.")
+
+    user_id = payload.get("sub")
+    user = UserRepository(db).get_by_id(user_id)
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="User not found or account disabled.")
+
+    return {
+        "access_token": create_access_token(user.id, user.role),
+        "refresh_token": create_refresh_token(user.id),
+        "token_type": "bearer",
+    }

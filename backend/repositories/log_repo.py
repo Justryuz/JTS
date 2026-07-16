@@ -31,17 +31,19 @@ class LogRepository:
         confidence: float,
         latency_ms: int,
         request_id: str,
+        source_page: str | None = None,
     ) -> PromptLog:
         log = PromptLog(
             api_key_id=api_key_id,
             source_domain=source_domain,
-            input_text=input_text[:500],  # truncate to prevent DB bloat
+            input_text=input_text[:500],
             status=status,
             attack_type=attack_type,
             engine_used=engine_used,
             confidence=confidence,
             latency_ms=latency_ms,
             request_id=request_id,
+            source_page=source_page,
         )
         self._db.add(log)
         self._db.commit()
