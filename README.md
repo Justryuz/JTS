@@ -495,6 +495,6 @@ if response.json()["status"] == "BLOCKED":
 
 ## License & Credits
 
-Built with passion from **Sungai Buloh, Selangor, Malaysia**.
+Made with ❤️ from Sungai Buloh, Malaysia**.
 
 Standards reference: OWASP, NACSA, JPDP, MCMC, AIGE, MY-AI Standards (SIRIM/JSM).

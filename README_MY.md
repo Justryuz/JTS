@@ -431,6 +431,6 @@ if respons.json()["status"] == "BLOCKED":
 
 ## Lesen & Kredit
 
-Dibina dengan penuh semangat dari **Sungai Buloh, Selangor, Malaysia**.
+Made with ❤️ from Sungai Buloh, Malaysia**.
 
 Rujukan standard: OWASP, NACSA, JPDP, MCMC, AIGE, MY-AI Standards (SIRIM/JSM).
