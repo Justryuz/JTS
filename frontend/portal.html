@@ -403,8 +403,21 @@
         loadStats(); loadKeys(); loadLogs();
     }
 
+    function handleUnauthorized(res) {
+        if (res.status === 401) {
+            localStorage.removeItem('aisec_token');
+            localStorage.removeItem('aisec_email');
+            document.getElementById('portalScreen').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            showAuthError('Session expired. Please log in again.');
+            return true;
+        }
+        return false;
+    }
+
     async function loadStats() {
         const res = await fetch(`${API}/portal/stats`, { headers: authHeaders() });
+        if (handleUnauthorized(res)) return;
         if (!res.ok) return;
         const d = await res.json();
         document.getElementById('statTotal').textContent = d.total_requests.toLocaleString();
@@ -430,6 +443,7 @@
 
     async function loadKeys() {
         const res = await fetch(`${API}/portal/api-keys`, { headers: authHeaders() });
+        if (handleUnauthorized(res)) return;
         if (!res.ok) return;
         const keys = await res.json();
         populateToolSelectors(keys);
@@ -452,6 +466,7 @@
 
     async function loadLogs() {
         const res = await fetch(`${API}/portal/logs`, { headers: authHeaders() });
+        if (handleUnauthorized(res)) return;
         if (!res.ok) return;
         const logs = await res.json();
         const tbody = document.getElementById('logsTableBody');
