@@ -17,7 +17,7 @@ from database.session import get_db
 from repositories.api_key_repo import ApiKeyRepository
 from repositories.log_repo import LogRepository
 from schemas.common import StandardResponse
-from schemas.scan import CodeScanRequest, RepoScanRequest, UrlScanRequest
+from schemas.scan import CodeScanRequest, RepoScanRequest, UrlScanRequest, WebshellScanRequest, SeoScanRequest
 from services.api_key_service import ApiKeyError, ApiKeyService
 from utils.jwt_utils import get_current_user_id
 
@@ -189,6 +189,61 @@ def get_scan_status(
         data=data,
         request_id=getattr(request.state, "request_id", ""),
     )
+
+
+@router.post("/api/v1/scan/webshell", summary="Scan file for webshell/backdoor patterns")
+def scan_webshell(
+    body: WebshellScanRequest,
+    request: Request,
+    x_api_key: str = Header(..., alias="X-API-Key"),
+    x_origin_domain: str = Header(..., alias="X-Origin-Domain"),
+    db: Session = Depends(get_db),
+    key_service: ApiKeyService = Depends(_key_service),
+):
+    _validate_key(x_api_key, x_origin_domain, key_service)
+
+    from scanners.webshell_scanner import scan_files
+    result = scan_files({body.filename: body.code})
+
+    return {
+        "filename": body.filename,
+        "total_files_scanned": result.total_files_scanned,
+        "total_findings": result.total_findings,
+        "severity_breakdown": result.severity_breakdown,
+        "findings_by_file": result.findings_by_file,
+        "scan_duration_seconds": result.scan_duration_seconds,
+        "timestamp": result.timestamp,
+    }
+
+
+@router.post("/api/v1/scan/seo", summary="Scan URL for SEO poisoning / spam injection")
+def scan_seo(
+    body: SeoScanRequest,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+):
+    """
+    Scan a live URL for SEO poisoning indicators.
+    Requires JWT only — no API Key or domain needed.
+    """
+    if not body.url:
+        raise HTTPException(status_code=422, detail={
+            "code": "TG-4009", "title": "Missing URL",
+            "description": "Provide a 'url' to scan.",
+            "recommendation": "Pass a valid http/https URL.", "reference": "",
+        })
+
+    from scanners.seo_scanner import scan_seo as _scan
+    result = _scan(url=body.url, max_pages=body.max_pages)
+
+    if "error" in result:
+        raise HTTPException(status_code=422, detail={
+            "code": ErrorCode.URL_NOT_SAFE, "title": "URL Not Safe",
+            "description": result["error"],
+            "recommendation": "Provide a valid public URL.", "reference": "",
+        })
+
+    return result
 
 
 # ── Background task helpers ───────────────────────────────────────────────────

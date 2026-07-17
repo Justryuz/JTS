@@ -57,6 +57,7 @@ class ScanType(str, Enum):
     ZIP_UPLOAD = "zip_upload"
     LIVE_URL = "live_url"
     CODE = "code"
+    SEO_POISON = "seo_poison"
 
 
 # ── Error Codes ───────────────────────────────────────────────────────────────

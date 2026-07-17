@@ -66,7 +66,7 @@ class Settings(BaseSettings):
 
     # ── Rate Limiting ─────────────────────────────────────────────────────
     shield_rate_limit_per_minute: int = 100
-    auth_rate_limit_per_minute: int = 10
+    auth_rate_limit_per_minute: int = 60
     scan_rate_limit_per_minute: int = 20
 
     # ── CORS ──────────────────────────────────────────────────────────────

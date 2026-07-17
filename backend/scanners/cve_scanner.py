@@ -4,10 +4,11 @@ Mengesan kelemahan keselamatan dalam kod yang dihantar oleh sistem bersambung
 Pematuhan: OWASP Top 10, CWE/SANS Top 25, NACSA, CSM
 """
 
+import logging
 import re
 from dataclasses import dataclass, field
 
-from engines import ml_engine
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -252,19 +253,24 @@ def scan_code(code: str, filename: str = "unknown", use_ml: bool = True) -> Scan
                     })
 
     # ML-based insecure code scan (CodeBERT)
-    if use_ml and ml_engine.is_available():
-        ml_result = ml_engine.scan_code(code)
-        if ml_result.status == "BLOCKED":
-            vulnerabilities.append(Vulnerability(
-                cwe_id="CWE-676",
-                cve_ref="N/A",
-                title="Insecure Code Pattern (ML)",
-                severity="HIGH",
-                description=f"CodeBERT detected insecure code pattern (confidence: {ml_result.confidence}).",
-                line_hint=f"{filename} — ML model: {ml_result.model_used}",
-                owasp_ref="A03:2021",
-            ))
-            severity_count["HIGH"] += 1
+    if use_ml:
+        try:
+            from engines import ml_engine
+            if ml_engine.is_available():
+                ml_result = ml_engine.scan_code(code)
+                if ml_result.status == "BLOCKED":
+                    vulnerabilities.append(Vulnerability(
+                        cwe_id="CWE-676",
+                        cve_ref="N/A",
+                        title="Insecure Code Pattern (ML)",
+                        severity="HIGH",
+                        description=f"CodeBERT detected insecure code pattern (confidence: {ml_result.confidence}).",
+                        line_hint=f"{filename} — ML model: {ml_result.model_used}",
+                        owasp_ref="A03:2021",
+                    ))
+                    severity_count["HIGH"] += 1
+        except Exception as e:
+            logger.warning(f"ML code scan skipped: {e}")
 
     return ScanResult(
         total_issues=len(vulnerabilities),

@@ -83,3 +83,30 @@ class VerifyDomainRequest(BaseModel):
     target_url: str | None = Field(default=None, max_length=2048)
     repo_url: str | None = Field(default=None, max_length=500)
     branch: str = Field(default="main", max_length=100)
+
+
+class WebshellScanRequest(BaseModel):
+    code: str = Field(min_length=1, max_length=500_000)
+    filename: str = Field(default="unknown", max_length=255)
+
+    @field_validator("filename")
+    @classmethod
+    def validate_filename(cls, v: str) -> str:
+        if not re.match(r"^[\w\-. ]+\.[a-zA-Z]{1,10}$", v) and v != "unknown":
+            raise ValueError("Invalid filename format")
+        return v
+
+
+class SeoScanRequest(BaseModel):
+    url: str | None = Field(default=None, max_length=2048)
+    max_pages: int = Field(default=20, ge=1, le=100)
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        v = v.strip()
+        if not v.startswith(("http://", "https://")):
+            v = "https://" + v
+        return v

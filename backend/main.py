@@ -98,7 +98,8 @@ tags_metadata = [
             "| `/scan/code` | Source code string | Hybrid (Rule + ML) |\n"
             "| `/scan/repo` | GitHub public repo | Aggregator |\n"
             "| `/scan/url` | Live website | DAST |\n"
-            "| `/scan/upload` | ZIP project file | Aggregator |\n\n"
+            "| `/scan/upload` | ZIP project file | Aggregator |\n"
+            "| `/scan/webshell` | Single file content | Webshell/Backdoor patterns |\n\n"
             "Repo and ZIP scans run as **background jobs** — poll `/scan/status/{job_id}` for results."
         ),
     },

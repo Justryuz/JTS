@@ -7,14 +7,20 @@ Standards: Part 3 §30, Clean Architecture
 
 from __future__ import annotations
 
-from passlib.context import CryptContext
+import bcrypt
 
 from config.constants import ErrorCode
 from config.settings import get_settings
 from repositories.user_repo import UserRepository
 from utils.jwt_utils import create_access_token, create_refresh_token
 
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def _hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode()[:72], bcrypt.gensalt()).decode()
+
+
+def _verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode()[:72], hashed.encode())
 
 
 class AuthError(Exception):
@@ -40,13 +46,13 @@ class AuthService:
                 description=f"Email {email} is already registered.",
                 recommendation="Use a different email or log in.",
             )
-        password_hash = _pwd_context.hash(password)
+        password_hash = _hash_password(password)
         user = self._repo.create(email=email, password_hash=password_hash)
         return {"message": "User registered successfully", "user_id": user.id}
 
     def login(self, email: str, password: str) -> dict:
         user = self._repo.get_by_email(email)
-        if not user or not _pwd_context.verify(password, user.password_hash):
+        if not user or not _verify_password(password, user.password_hash):
             raise AuthError(
                 code=ErrorCode.INVALID_CREDENTIALS,
                 title="Invalid Credentials",

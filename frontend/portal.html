@@ -285,6 +285,40 @@
                 <button onclick="runUploadScan()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors">Upload & Scan</button>
                 <div id="uploadResult" class="hidden"></div>
             </div>
+
+        </section>
+
+        <!-- SEO POISON SCANNER -->
+        <section class="rounded-2xl overflow-hidden" style="background:rgba(15,23,42,0.7);border:1px solid rgba(234,179,8,0.15);backdrop-filter:blur(8px)">
+            <div class="p-6 border-b" style="border-color:rgba(234,179,8,0.1)">
+                <div class="flex items-center gap-3 mb-1">
+                    <span class="text-lg">&#128375;</span>
+                    <p class="section-title" style="color:#eab308">SEO Poison Scanner</p>
+                    <span class="ml-auto text-xs px-2 py-0.5 rounded-full font-semibold" style="background:rgba(234,179,8,0.1);color:#eab308;border:1px solid rgba(234,179,8,0.2)">No API Key Required</span>
+                </div>
+                <p class="text-sm text-slate-500">Scan any live website for SEO poisoning &amp; spam injection. Login only &mdash; no API Key or domain needed.</p>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row gap-3 max-w-2xl">
+                    <input id="seoUrl" type="text" placeholder="https://target-website.com"
+                        class="flex-1 rounded-lg px-4 py-2.5 text-slate-200 text-sm focus:outline-none bg-slate-900" style="border:1px solid rgba(234,179,8,0.2)">
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs text-slate-500 whitespace-nowrap">Max pages:</label>
+                        <input id="seoMaxPages" type="number" value="20" min="1" max="100"
+                            class="w-20 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none bg-slate-900" style="border:1px solid rgba(234,179,8,0.2)">
+                    </div>
+                    <button onclick="runSeoScan()" class="text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-all whitespace-nowrap" style="background:linear-gradient(135deg,#ca8a04,#a16207)">&#128269; Scan for SEO Poison</button>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-rose-500 inline-block"></span>Spam keyword injection</span>
+                    <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-rose-500 inline-block"></span>Googlebot cloaking</span>
+                    <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-orange-500 inline-block"></span>Hidden elements</span>
+                    <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-orange-500 inline-block"></span>Link farm injection</span>
+                    <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-orange-500 inline-block"></span>Suspicious redirects</span>
+                    <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-yellow-500 inline-block"></span>robots.txt spam</span>
+                </div>
+                <div id="seoResult" class="hidden"></div>
+            </div>
         </section>
 
         <!-- SECURITY LOGS -->
@@ -685,6 +719,73 @@
             showScanResult('uploadResult', await res.json());
         } catch(e) { alert('Error: ' + e.message); }
         finally { btn.textContent = 'Upload & Scan'; btn.disabled = false; }
+    }
+
+    async function runSeoScan() {
+        const url = document.getElementById('seoUrl').value.trim();
+        if (!url) return alert('Please enter a URL.');
+        const max_pages = parseInt(document.getElementById('seoMaxPages').value) || 20;
+        const btn = event.target; btn.textContent = 'Scanning...'; btn.disabled = true;
+        try {
+            const res = await fetch(`${API}/api/v1/scan/seo`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+                body: JSON.stringify({ url, max_pages })
+            });
+            const data = await res.json();
+            showSeoResult('seoResult', data);
+        } catch(e) { alert('Error: ' + e.message); }
+        finally { btn.textContent = '\u{1F50D} Scan for SEO Poison'; btn.disabled = false; }
+    }
+
+    function showSeoResult(elId, data) {
+        const el = document.getElementById(elId);
+        el.classList.remove('hidden');
+        if (data.error || data.detail) {
+            const msg = data.error || (typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail));
+            el.innerHTML = `<div class="bg-rose-950/40 border border-rose-800 rounded-lg p-4 text-rose-400 text-sm">&#10060; ${escHtml(msg)}</div>`;
+            return;
+        }
+        const sb = data.severity_breakdown || {};
+        const score = data.compliance_score || {};
+        const findings = data.findings || [];
+        const grade = score.grade || '&#8212;';
+        const gradeColor = grade === 'A' ? 'text-emerald-400' : grade === 'B' ? 'text-blue-400' : grade === 'C' ? 'text-yellow-400' : 'text-rose-400';
+        const sevColor = s => s === 'HIGH' ? 'bg-rose-950 text-rose-400 border-rose-900' : s === 'MEDIUM' ? 'bg-yellow-950 text-yellow-400 border-yellow-900' : 'bg-slate-800 text-slate-400 border-slate-700';
+        const typeLabel = {
+            SPAM_KEYWORD: 'Spam Keyword', CLOAKING: 'Cloaking',
+            SUSPICIOUS_REDIRECT: 'Suspicious Redirect', HIDDEN_CONTENT: 'Hidden Content',
+            LINK_FARM: 'Link Farm', ROBOTS_SPAM: 'robots.txt Spam',
+            WEBSHELL_PATTERN: 'Webshell Pattern', HTACCESS_CLOAKING: '.htaccess Cloaking',
+        };
+        let html = '<div class="space-y-4">';
+        html += `<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-slate-900 border border-slate-700 rounded-lg p-3 text-center"><p class="text-2xl font-bold text-white">${data.total_issues ?? 0}</p><p class="text-xs text-slate-400">Total Issues</p></div>
+            <div class="bg-rose-950/30 border border-rose-900 rounded-lg p-3 text-center"><p class="text-2xl font-bold text-rose-400">${sb.high ?? 0}</p><p class="text-xs text-slate-400">High</p></div>
+            <div class="bg-yellow-950/30 border border-yellow-900 rounded-lg p-3 text-center"><p class="text-2xl font-bold text-yellow-400">${sb.medium ?? 0}</p><p class="text-xs text-slate-400">Medium</p></div>
+            <div class="bg-slate-900 border border-slate-700 rounded-lg p-3 text-center"><span class="text-2xl font-black ${gradeColor}">${grade}</span><p class="text-xs text-slate-400">${score.overall ?? 0}% Score</p></div>
+        </div>`;
+        if (findings.length === 0) {
+            html += '<div class="bg-emerald-950/30 border border-emerald-800 rounded-lg p-4 text-emerald-400 text-sm">&#10003; No SEO poisoning indicators found.</div>';
+        } else {
+            html += '<div class="space-y-2">';
+            findings.forEach(f => {
+                html += `<div class="bg-slate-900/60 border border-slate-800 rounded-lg p-3 space-y-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="px-2 py-0.5 text-xs font-bold rounded border ${sevColor(f.severity)}">${escHtml(f.severity)}</span>
+                        <span class="text-sm text-white font-medium">${escHtml(typeLabel[f.type] || f.type)}</span>
+                        ${f.location ? '<span class="text-xs text-slate-500 font-mono truncate max-w-xs">' + escHtml(f.location) + '</span>' : ''}
+                    </div>
+                    ${f.description ? '<p class="text-xs text-slate-400">' + escHtml(f.description) + '</p>' : ''}
+                    ${f.evidence ? '<p class="text-xs font-mono text-slate-500 bg-slate-950 rounded px-2 py-1 truncate">Evidence: ' + escHtml(f.evidence) + '</p>' : ''}
+                    ${f.simple_explanation ? '<p class="text-xs text-indigo-400">&#128161; ' + escHtml(f.simple_explanation) + '</p>' : ''}
+                </div>`;
+            });
+            html += '</div>';
+        }
+        html += `<p class="text-xs text-slate-600 text-right">Scanned: ${escHtml(data.target || '')} &mdash; ${data.scan_duration_seconds}s</p>`;
+        html += '</div>';
+        el.innerHTML = html;
     }
 
     if (getToken()) showPortal();
