@@ -73,6 +73,7 @@ JTS/
 │   │   ├── cve_scanner.py           # CVE/CWE + NACSA/JPDP/MCMC scanner
 │   │   ├── secret_scanner.py        # Secret & API key exposure scanner
 │   │   ├── dependency_scanner.py    # Supply chain / dependency scanner
+│   │   ├── seo_scanner.py           # SEO poisoning / spam injection scanner
 │   │   └── aggregator.py            # Project-level result aggregator
 │   ├── ingest/
 │   │   ├── github_ingest.py         # GitHub repo clone & scan
@@ -82,7 +83,7 @@ JTS/
 │   │   ├── auth.py                  # /portal/auth/register, /login
 │   │   ├── portal.py                # /portal/stats, /logs, /api-keys, /generate
 │   │   ├── gateway.py               # /api/v1/shield
-│   │   ├── scan.py                  # /api/v1/scan/code|repo|url|upload
+│   │   ├── scan.py                  # /api/v1/scan/code|repo|url|upload|seo
 │   │   ├── admin.py                 # /admin/update
 │   │   └── report.py                # /portal/report/pdf
 │   ├── utils/
@@ -104,6 +105,7 @@ JTS/
 │       │   └── test_auth_service.py # 6 tests
 │       └── security/
 │           └── test_security.py     # SSRF, path traversal, injection tests
+└── seo_poison_scanner.py            # Standalone SEO poison scanner (CLI tool)
 └── frontend/
     ├── index.html                   # Landing page
     └── portal.html                  # Management portal
@@ -350,6 +352,37 @@ field: file (ZIP)
 
 Limits: ZIP size < 200MB after extraction, < 500 files.
 
+#### `POST /api/v1/scan/seo`
+Scan a live website for SEO poisoning and spam injection. Requires JWT only — no API Key needed.
+
+```json
+// Request
+{ "url": "https://target-website.com", "max_pages": 20 }
+
+// Response
+{
+  "scan_type": "seo_poison",
+  "target": "https://target-website.com",
+  "total_issues": 2,
+  "severity_breakdown": { "critical": 0, "high": 1, "medium": 1, "low": 0 },
+  "findings": [
+    {
+      "type": "CLOAKING",
+      "severity": "HIGH",
+      "location": "https://target-website.com",
+      "evidence": "viagra, casino online",
+      "description": "Spam keywords visible to Googlebot but not normal visitors"
+    }
+  ],
+  "compliance_score": { "overall": 84.0, "grade": "B" },
+  "scan_duration_seconds": 3.21
+}
+```
+
+Detects: Spam keyword injection, cloaking (Googlebot vs normal UA), hidden content with spam, link farms, suspicious redirects, robots.txt spam, webshell patterns, .htaccess cloaking rules.
+
+Limits: max_pages default 20, max 100. Public URLs only (SSRF protected).
+
 ---
 
 ### System Endpoint
@@ -466,6 +499,14 @@ if response.json()["status"] == "BLOCKED":
 
 | File | Change |
 |---|---|
+| `scanners/seo_scanner.py` | New — SEO poisoning / spam injection scanner with SSRF protection |
+| `scanners/seo_scanner.py` | Detects: spam keywords, cloaking, hidden content, link farm, suspicious redirects, robots.txt spam, webshell patterns, .htaccess cloaking |
+| `scanners/seo_scanner.py` | False positive hardening — skip nav/menu hidden elements, require 3+ exclusive bot keywords for cloaking, trusted domain (.edu/.gov) link farm exemption |
+| `schemas/scan.py` | Added `SeoScanRequest(url, max_pages)` with URL validator |
+| `config/constants.py` | Added `SEO_POISON = "seo_poison"` to `ScanType` enum |
+| `api/v1/scan.py` | Added `POST /api/v1/scan/seo` — JWT only, no API Key required |
+| `requirements.txt` | Added `beautifulsoup4==4.12.3` for HTML parsing in SEO scanner |
+| `portal.html` | Added SEO Poison Scanner as standalone section — amber/yellow theme, no API Key required badge |
 | `main.py` | Fixed CWE — removed `.resolve()` from `_BASE_DIR` and `_FRONTEND_DIR` (absolute path reliability) |
 | `main.py` | `FileResponse` now receives `str(file_path)` instead of raw `Path` object |
 | `middleware/security_headers.py` | CSP updated — added `cdn.jsdelivr.net` to `script-src` and `style-src` |
