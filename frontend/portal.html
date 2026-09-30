@@ -105,6 +105,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
                 Security Logs
             </div>
+            <div onclick="go('loop')" id="nav-loop" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.2v-2a4 4 0 0 1 4-4h14"/><path d="M7 21.9l-4-4 4-4"/><path d="M21 11.8v2a4 4 0 0 1-4 4H3"/></svg>
+                Loop Engineering
+            </div>
             <div onclick="go('settings')" id="nav-settings" class="nav-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 Settings
@@ -367,10 +371,46 @@
                         <table class="w-full text-left border-collapse text-sm">
                             <thead><tr class="bg-indigo-950/20 text-slate-500 border-b border-indigo-900/20">
                                 <th class="p-4 font-medium mono text-xs">Time/Date</th><th class="p-4 font-medium mono text-xs">Origin Domain</th><th class="p-4 font-medium mono text-xs">Source Page</th>
-                                <th class="p-4 font-medium mono text-xs">Prompt Input Text</th><th class="p-4 font-medium mono text-xs">Attack Type</th><th class="p-4 font-medium mono text-xs">Action</th>
+                                <th class="p-4 font-medium mono text-xs">Prompt Input Text</th><th class="p-4 font-medium mono text-xs">Attack Type</th><th class="p-4 font-medium mono text-xs">Action</th><th class="p-4 font-medium mono text-xs">Feedback</th>
                             </tr></thead>
                             <tbody id="logsTableBody" class="divide-y divide-slate-800/60 text-slate-300">
-                                <tr><td colspan="6" class="p-8 text-center text-slate-500 text-sm">No logs yet. Send a request via /api/v1/shield to see logs.</td></tr>
+                                <tr><td colspan="7" class="p-8 text-center text-slate-500 text-sm">No logs yet. Send a request via /api/v1/shield to see logs.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ VIEW: LOOP ENGINEERING ============ -->
+            <section id="view-loop" class="view space-y-6">
+                <div class="card rounded-2xl p-6 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <p class="section-title mb-1">Adaptive Feedback Loop</p>
+                            <p class="text-sm text-slate-500">Mine rule candidates from logs you labelled as attacks (TP/FN). Analyst approval required — nothing auto-applies.</p>
+                        </div>
+                        <button onclick="mineRules()" class="btn-primary text-white font-semibold text-sm px-5 py-2.5 rounded-xl whitespace-nowrap">⚙ Mine Candidates</button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+                        <div class="bg-slate-900/50 rounded-lg p-3 border border-slate-800"><p id="loopPending" class="text-2xl font-black text-amber-400 mono">—</p><p class="text-xs text-slate-500">Pending</p></div>
+                        <div class="bg-slate-900/50 rounded-lg p-3 border border-slate-800"><p id="loopApproved" class="text-2xl font-black text-emerald-400 mono">—</p><p class="text-xs text-slate-500">Approved</p></div>
+                        <div class="bg-slate-900/50 rounded-lg p-3 border border-slate-800"><p id="loopRejected" class="text-2xl font-black text-slate-400 mono">—</p><p class="text-xs text-slate-500">Rejected</p></div>
+                    </div>
+                    <p class="text-xs text-slate-600">Tip: go to <button onclick="go('logs')" class="text-indigo-400 hover:text-indigo-300 underline">Security Logs</button> and label prompts as TP/FN first, then mine. A phrase must recur in ≥3 labelled attacks to be suggested. Requires admin or security_analyst role.</p>
+                </div>
+                <div class="card rounded-2xl overflow-hidden">
+                    <div class="p-5 border-b border-indigo-900/20 flex items-center justify-between">
+                        <p class="section-title">Rule Suggestions</p>
+                        <button onclick="loadSuggestions()" class="text-xs mono text-indigo-500 hover:text-indigo-300 transition-colors">[ ↻ refresh ]</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead><tr class="bg-indigo-950/20 text-slate-500 border-b border-indigo-900/20">
+                                <th class="p-3 font-medium mono text-xs">Rule</th><th class="p-3 font-medium mono text-xs">Pattern</th>
+                                <th class="p-3 font-medium mono text-xs">Seen</th><th class="p-3 font-medium mono text-xs">Status</th><th class="p-3 font-medium mono text-xs">Action</th>
+                            </tr></thead>
+                            <tbody id="suggestionsBody" class="divide-y divide-slate-800/60 text-slate-300">
+                                <tr><td colspan="5" class="p-6 text-center text-slate-500 text-sm">No suggestions yet. Label attacks then click Mine Candidates.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -407,7 +447,7 @@
 
 <script>
     const API = '';
-    const PAGE_TITLES = { dashboard:'Dashboard', keys:'API Keys', tools:'Security Tools', seo:'SEO Scanner', logs:'Security Logs', settings:'Settings' };
+    const PAGE_TITLES = { dashboard:'Dashboard', keys:'API Keys', tools:'Security Tools', seo:'SEO Scanner', logs:'Security Logs', loop:'Loop Engineering', settings:'Settings' };
     let trendChart = null, attackChart = null;
 
     function parseDetail(detail, fallback) {
@@ -428,6 +468,7 @@
         document.getElementById('view-' + page).classList.add('active');
         document.getElementById('nav-' + page).classList.add('active');
         document.getElementById('pageTitle').textContent = PAGE_TITLES[page] || 'Dashboard';
+        if (page === 'loop') loadSuggestions();
         toggleSidebar(false);
     }
     function toggleSidebar(show) {
@@ -613,7 +654,7 @@
         renderCharts(logs);
         renderRecent(logs);
         const tbody = document.getElementById('logsTableBody');
-        if (logs.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-500 text-sm">No logs yet.</td></tr>'; return; }
+        if (logs.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-slate-500 text-sm">No logs yet.</td></tr>'; return; }
         tbody.innerHTML = logs.map(l => {
             const blocked = l.status === 'BLOCKED';
             return `<tr class="hover:bg-slate-800/20 transition-colors">
@@ -623,8 +664,70 @@
                 <td class="p-4 max-w-xs truncate font-mono text-xs ${blocked ? 'text-rose-300 bg-rose-950/10' : 'text-slate-400'} rounded">"${escHtml(l.input_text)}"</td>
                 <td class="p-4"><span class="px-2 py-0.5 text-xs font-semibold rounded-full ${blocked ? 'bg-rose-950 text-rose-400 border border-rose-900' : 'bg-slate-900 text-slate-500'}">${escHtml(l.attack_type)}</span></td>
                 <td class="p-4">${blocked ? '<span class="text-rose-500 font-bold text-xs">BLOCKED</span>' : '<span class="text-emerald-500 font-bold text-xs">ALLOWED</span>'}</td>
+                <td class="p-4"><div class="flex gap-1" data-log="${l.id}">
+                    <button title="True Positive (correctly blocked)" onclick="labelLog('${l.id}','TP',this)" class="fb-btn text-[10px] mono px-1.5 py-0.5 rounded border border-rose-900/50 text-rose-400 hover:bg-rose-950/40">TP</button>
+                    <button title="False Positive (wrongly blocked)" onclick="labelLog('${l.id}','FP',this)" class="fb-btn text-[10px] mono px-1.5 py-0.5 rounded border border-amber-900/50 text-amber-400 hover:bg-amber-950/40">FP</button>
+                    <button title="False Negative (attack missed)" onclick="labelLog('${l.id}','FN',this)" class="fb-btn text-[10px] mono px-1.5 py-0.5 rounded border border-orange-900/50 text-orange-400 hover:bg-orange-950/40">FN</button>
+                    <button title="True Negative (correctly allowed)" onclick="labelLog('${l.id}','TN',this)" class="fb-btn text-[10px] mono px-1.5 py-0.5 rounded border border-slate-700 text-slate-400 hover:bg-slate-800">TN</button>
+                </div></td>
             </tr>`;
         }).join('');
+    }
+
+    // ── Loop Engineering ─────────────────────────────────────────────────────
+    async function labelLog(logId, label, btn) {
+        const res = await fetch(`${API}/portal/logs/${logId}/feedback`, {
+            method:'POST', headers:authHeaders(), body:JSON.stringify({ label })
+        });
+        if (handleUnauthorized(res)) return;
+        const data = await res.json();
+        if (!res.ok) return alert('Feedback failed: ' + parseDetail(data.detail, 'error'));
+        // Highlight the chosen label in its row group.
+        const group = btn.parentElement;
+        group.querySelectorAll('.fb-btn').forEach(b => b.classList.remove('ring-2','ring-indigo-400','bg-indigo-950/40'));
+        btn.classList.add('ring-2','ring-indigo-400','bg-indigo-950/40');
+    }
+
+    async function mineRules() {
+        const res = await fetch(`${API}/portal/feedback/mine`, { method:'POST', headers:authHeaders() });
+        if (handleUnauthorized(res)) return;
+        const data = await res.json();
+        if (!res.ok) return alert('Mine failed: ' + parseDetail(data.detail, 'error'));
+        alert(`Mining complete — ${data.created} new candidate rule(s).` + (data.note ? `\n${data.note}` : ''));
+        loadSuggestions();
+    }
+
+    async function loadSuggestions() {
+        const res = await fetch(`${API}/portal/feedback/suggestions`, { headers: authHeaders() });
+        if (handleUnauthorized(res)) return;
+        const rows = await res.json();
+        if (!res.ok) { document.getElementById('suggestionsBody').innerHTML = `<tr><td colspan="5" class="p-6 text-center text-rose-400 text-sm">${parseDetail(rows.detail,'Access denied (admin/analyst only)')}</td></tr>`; return; }
+        const counts = { PENDING:0, APPROVED:0, REJECTED:0 };
+        rows.forEach(r => { counts[r.status] = (counts[r.status]||0)+1; });
+        document.getElementById('loopPending').textContent = counts.PENDING;
+        document.getElementById('loopApproved').textContent = counts.APPROVED;
+        document.getElementById('loopRejected').textContent = counts.REJECTED;
+        const tbody = document.getElementById('suggestionsBody');
+        if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-500 text-sm">No suggestions yet. Label attacks then click Mine Candidates.</td></tr>'; return; }
+        const statusBadge = s => s === 'PENDING' ? 'bg-amber-950 text-amber-400 border-amber-900' : s === 'APPROVED' ? 'bg-emerald-950 text-emerald-400 border-emerald-900' : 'bg-slate-900 text-slate-500 border-slate-800';
+        tbody.innerHTML = rows.map(r => `<tr class="hover:bg-slate-800/20 transition-colors">
+            <td class="p-3 text-slate-300 mono text-xs">${escHtml(r.rule_name)}</td>
+            <td class="p-3 font-mono text-xs text-slate-500 max-w-xs truncate">${escHtml(r.pattern)}</td>
+            <td class="p-3 mono text-xs text-slate-400">${r.occurrence_count}×</td>
+            <td class="p-3"><span class="px-2 py-0.5 text-xs font-semibold rounded-full border ${statusBadge(r.status)}">${r.status}</span></td>
+            <td class="p-3">${r.status === 'PENDING'
+                ? `<div class="flex gap-2"><button onclick="reviewSuggestion('${r.id}','approve')" class="text-xs text-emerald-400 hover:text-emerald-300">Approve</button><button onclick="reviewSuggestion('${r.id}','reject')" class="text-xs text-rose-500 hover:text-rose-400">Reject</button></div>`
+                : `<span class="text-xs text-slate-600">${r.reviewed_by ? 'reviewed' : '—'}</span>`}</td>
+        </tr>`).join('');
+    }
+
+    async function reviewSuggestion(id, action) {
+        if (action === 'approve' && !confirm('Approve this rule? It becomes active in the live engine immediately.')) return;
+        const res = await fetch(`${API}/portal/feedback/suggestions/${id}/${action}`, { method:'POST', headers:authHeaders() });
+        if (handleUnauthorized(res)) return;
+        const data = await res.json();
+        if (!res.ok) return alert('Action failed: ' + parseDetail(data.detail, 'error'));
+        loadSuggestions();
     }
 
     function copyKey() {

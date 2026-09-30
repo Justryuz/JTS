@@ -5,5 +5,10 @@ from models.base import Base
 from models.user import User
 from models.api_key import ApiKey
 from models.log import PromptLog, AuditLog, ScanJob, SecurityLog
+from models.feedback import PromptFeedback, RuleSuggestion
 
-__all__ = ["Base", "User", "ApiKey", "PromptLog", "AuditLog", "ScanJob", "SecurityLog"]
+__all__ = [
+    "Base", "User", "ApiKey",
+    "PromptLog", "AuditLog", "ScanJob", "SecurityLog",
+    "PromptFeedback", "RuleSuggestion",
+]

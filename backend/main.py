@@ -38,6 +38,34 @@ settings = get_settings()
 run_migrations()
 
 
+def _apply_approved_rules() -> None:
+    """Loop Engineering: re-apply analyst-approved rule suggestions to the live
+    rule engine on startup, so learned rules survive restarts."""
+    try:
+        from database.session import SessionLocal
+        from repositories.feedback_repo import FeedbackRepository
+        from engines import rule_engine
+        from engines.loop_miner import is_safe_pattern
+        db = SessionLocal()
+        try:
+            existing = {p for p, _ in rule_engine.PROMPT_INJECTION_RULES}
+            applied = 0
+            for pattern, rule_name in FeedbackRepository(db).approved_patterns():
+                if pattern not in existing and is_safe_pattern(pattern):
+                    rule_engine.PROMPT_INJECTION_RULES.append((pattern, rule_name))
+                    existing.add(pattern)
+                    applied += 1
+            if applied:
+                logging.getLogger(__name__).info(f"Loop Engineering: re-applied {applied} approved rule(s).")
+        finally:
+            db.close()
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Approved-rule re-apply skipped: {e}")
+
+
+_apply_approved_rules()
+
+
 def _warmup_ml_models() -> None:
     """Pre-load all ML models in background so first scan request is fast."""
     import threading
@@ -167,6 +195,7 @@ from api.v1.portal import router as portal_router
 from api.v1.scan import router as scan_router
 from api.v1.admin import router as admin_router
 from api.v1.report import router as report_router
+from api.v1.feedback import router as feedback_router
 
 app.include_router(auth_router)
 app.include_router(gateway_router)
@@ -174,6 +203,7 @@ app.include_router(portal_router)
 app.include_router(scan_router)
 app.include_router(admin_router)
 app.include_router(report_router)
+app.include_router(feedback_router)
 
 # ── API Docs (Scalar) ─────────────────────────────────────────────────────────
 @app.get("/docs", include_in_schema=False)
