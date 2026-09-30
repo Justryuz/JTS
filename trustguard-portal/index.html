@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrustGuard — Portal</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+
+    <!-- Tailwind CSS + DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Custom Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        base: '#020817',
+                        surface: '#0f172a',
+                        'surface-2': '#1e293b',
+                        accent: '#6366f1',
+                        'accent-light': '#818cf8',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-base text-slate-100 min-h-screen font-sans">
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-surface border-r border-slate-800/60 z-40 flex flex-col transition-transform duration-300 lg:translate-x-0 -translate-x-full">
+        <!-- Logo -->
+        <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-800/60 shrink-0">
+            <div class="bg-indigo-600/20 border border-indigo-500/30 p-2 rounded-lg">
+                <i data-lucide="shield-check" class="w-5 h-5 text-indigo-400"></i>
+            </div>
+            <div>
+                <span class="font-bold text-white tracking-tight">TrustGuard</span>
+                <span class="text-[10px] font-mono text-indigo-500/60 ml-1">v2.0</span>
+            </div>
+        </div>
+
+        <!-- Nav Links -->
+        <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+            <a href="#dashboard" data-page="dashboard" class="nav-link active">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#shield" data-page="shield" class="nav-link">
+                <i data-lucide="zap" class="w-4 h-4"></i>
+                <span>Shield Demo</span>
+            </a>
+            <a href="#api-keys" data-page="api-keys" class="nav-link">
+                <i data-lucide="key" class="w-4 h-4"></i>
+                <span>API Keys</span>
+            </a>
+            <a href="#scan" data-page="scan" class="nav-link">
+                <i data-lucide="scan-search" class="w-4 h-4"></i>
+                <span>Scan Tools</span>
+            </a>
+            <a href="#logs" data-page="logs" class="nav-link">
+                <i data-lucide="scroll-text" class="w-4 h-4"></i>
+                <span>Security Logs</span>
+            </a>
+
+            <div class="pt-4 mt-4 border-t border-slate-800/60">
+                <p class="px-3 text-[10px] font-mono text-slate-600 uppercase tracking-widest mb-2">System</p>
+                <a href="#compliance" data-page="compliance" class="nav-link">
+                    <i data-lucide="badge-check" class="w-4 h-4"></i>
+                    <span>Compliance</span>
+                </a>
+                <a href="#settings" data-page="settings" class="nav-link">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                    <span>Settings</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- User Info -->
+        <div class="p-4 border-t border-slate-800/60 shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center">
+                    <i data-lucide="user" class="w-4 h-4 text-indigo-400"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-medium text-slate-300 truncate">admin@trustguard.my</p>
+                    <p class="text-[10px] font-mono text-indigo-500">admin</p>
+                </div>
+                <button id="logoutBtn" class="text-slate-600 hover:text-rose-400 transition-colors" title="Logout">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Mobile Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+    <!-- Main Content -->
+    <div class="lg:ml-64 min-h-screen flex flex-col">
+        <!-- Top Bar -->
+        <header class="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-slate-800/60 bg-surface/80 backdrop-blur-xl sticky top-0 z-20">
+            <div class="flex items-center gap-3">
+                <button id="menuBtn" class="lg:hidden text-slate-400 hover:text-white transition-colors" onclick="toggleSidebar()">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
+                </button>
+                <h1 id="pageTitle" class="text-lg font-bold text-white">Dashboard</h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <!-- Health Badge -->
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-950/30 border border-emerald-800/50 font-mono text-xs">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-emerald-400">ONLINE</span>
+                </div>
+                <!-- Notifications -->
+                <button class="relative text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <span class="absolute -top-1 -right-1 h-4 w-4 bg-rose-500 rounded-full text-[10px] font-bold flex items-center justify-center text-white">3</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Page Content Container -->
+        <main id="mainContent" class="flex-1 p-4 sm:p-6 lg:p-8">
+            <!-- Pages will be rendered here by JavaScript -->
+        </main>
+
+        <!-- Footer -->
+        <footer class="border-t border-slate-800/60 py-4 px-6">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-2">
+                <span class="font-mono text-xs text-slate-600">TrustGuard — AI Security Gateway v2.0.0</span>
+                <span class="font-mono text-xs text-slate-700">Made with ❤️ from Sungai Buloh, Malaysia</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- App JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,8 +1,21 @@
+# Python
 backend/venv/
-backend/__pycache__/
-backend/engine/__pycache__/
-backend/compliance/__pycache__/
-backend/reports/__pycache__/
-backend/*.db
+.venv/
+.venv-wsl/
+**/__pycache__/
 *.pyc
+*.pyo
+
+# Databases
+backend/*.db
+db/
+*.db
+*.db-shm
+*.db-wal
+
+# Environment / secrets
 .env
+backend/.env
+
+# Test / cache
+.pytest_cache/
