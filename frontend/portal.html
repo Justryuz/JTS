@@ -5,34 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrustGuard — Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #020c1b; }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        .tool-tab { color: #64748b; background: transparent; border-bottom: 2px solid transparent; transition: all .15s; }
-        .tool-tab:hover { color: #e2e8f0; }
-        .active-tab { color: #818cf8; border-bottom-color: #818cf8; background: rgba(99,102,241,.08); }
-        .card { background: rgba(15,23,42,0.7); border: 1px solid rgba(99,102,241,0.08); backdrop-filter: blur(8px); }
-        .card:hover { border-color: rgba(99,102,241,0.18); }
-        .stat-card-1 { background: linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(15,23,42,0.8) 60%); border: 1px solid rgba(99,102,241,0.15); }
-        .stat-card-2 { background: linear-gradient(135deg, rgba(244,63,94,0.1) 0%, rgba(15,23,42,0.8) 60%); border: 1px solid rgba(244,63,94,0.12); }
-        .stat-card-3 { background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(15,23,42,0.8) 60%); border: 1px solid rgba(16,185,129,0.12); }
-        .aurora { position: fixed; inset: 0; z-index: 0; pointer-events: none;
-            background: radial-gradient(ellipse 70% 40% at 15% 0%, rgba(99,102,241,0.07) 0%, transparent 60%),
-                        radial-gradient(ellipse 50% 30% at 85% 100%, rgba(139,92,246,0.05) 0%, transparent 55%); }
-        .grid-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none;
-            background-image: linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
-            background-size: 48px 48px;
-            mask-image: radial-gradient(ellipse 100% 60% at 50% 0%, black 20%, transparent 70%); }
-        .nav-glass { background: rgba(2,12,27,0.85); border-bottom: 1px solid rgba(99,102,241,0.1); backdrop-filter: blur(16px); }
-        .input-field { background: rgba(2,12,27,0.8); border: 1px solid rgba(99,102,241,0.12); color: #e2e8f0; transition: border-color .15s; }
-        .input-field:focus { outline: none; border-color: rgba(99,102,241,0.5); box-shadow: 0 0 0 3px rgba(99,102,241,0.08); }
-        .btn-primary { background: linear-gradient(135deg, #6366f1, #4f46e5); transition: all .15s; }
-        .btn-primary:hover { background: linear-gradient(135deg, #818cf8, #6366f1); box-shadow: 0 0 20px rgba(99,102,241,0.3); }
-        .section-title { font-size: .65rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #6366f1; font-family: 'JetBrains Mono', monospace; }
-        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #020c1b; } ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 3px; }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
+        :root { --bg:#020817; --panel:#0b1424; --line:rgba(99,102,241,.12); --ind:#818cf8; }
+        * { scrollbar-width: thin; scrollbar-color: rgba(99,102,241,.3) transparent; }
+        body { font-family:'Inter',sans-serif; background:var(--bg); }
+        .mono { font-family:'JetBrains Mono',monospace; }
+        .card { background:rgba(15,23,42,.6); border:1px solid var(--line); backdrop-filter:blur(10px); }
+        .card:hover { border-color:rgba(99,102,241,.22); }
+        .aurora { position:fixed; inset:0; z-index:0; pointer-events:none;
+            background:radial-gradient(ellipse 60% 40% at 12% 0%, rgba(99,102,241,.08) 0%, transparent 60%),
+                       radial-gradient(ellipse 50% 30% at 90% 100%, rgba(139,92,246,.06) 0%, transparent 55%); }
+        .grid-bg { position:fixed; inset:0; z-index:0; pointer-events:none;
+            background-image:linear-gradient(rgba(99,102,241,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,.025) 1px,transparent 1px);
+            background-size:46px 46px; mask-image:radial-gradient(ellipse 100% 60% at 50% 0%,black 20%,transparent 75%); }
+        .input-field { background:rgba(2,8,23,.8); border:1px solid rgba(99,102,241,.14); color:#e2e8f0; transition:border-color .15s,box-shadow .15s; }
+        .input-field:focus { outline:none; border-color:rgba(99,102,241,.55); box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+        .btn-primary { background:linear-gradient(135deg,#6366f1,#4f46e5); transition:all .15s; }
+        .btn-primary:hover { background:linear-gradient(135deg,#818cf8,#6366f1); box-shadow:0 0 22px rgba(99,102,241,.32); }
+        .section-title { font-size:.62rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#6366f1; font-family:'JetBrains Mono',monospace; }
+        /* Sidebar nav item */
+        .nav-item { display:flex; align-items:center; gap:.75rem; padding:.6rem .85rem; border-radius:.6rem; color:#94a3b8; font-size:.875rem; font-weight:500; cursor:pointer; transition:all .15s; border:1px solid transparent; }
+        .nav-item:hover { color:#e2e8f0; background:rgba(99,102,241,.06); }
+        .nav-item.active { color:#c7d2fe; background:rgba(99,102,241,.12); border-color:rgba(99,102,241,.25); }
+        .nav-item svg { width:1.1rem; height:1.1rem; flex-shrink:0; }
+        .view { display:none; }
+        .view.active { display:block; animation:fade .25s ease; }
+        @keyframes fade { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+        .tool-tab { color:#64748b; background:transparent; border-bottom:2px solid transparent; transition:all .15s; }
+        .tool-tab:hover { color:#e2e8f0; }
+        .active-tab { color:#818cf8; border-bottom-color:#818cf8; background:rgba(99,102,241,.08); }
+        ::-webkit-scrollbar { width:6px; height:6px; } ::-webkit-scrollbar-thumb { background:rgba(99,102,241,.3); border-radius:3px; }
     </style>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐛</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
 </head>
 <body class="text-slate-100 min-h-screen">
 <div class="aurora"></div>
@@ -44,23 +50,16 @@
         <div class="text-center space-y-2">
             <a href="/" class="inline-block mb-2">
                 <div class="inline-flex bg-indigo-600/20 border border-indigo-500/30 p-3 rounded-xl">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                        <path d="M9 12l2 2 4-4"/>
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
                 </div>
             </a>
             <h1 class="text-2xl font-bold text-white">TrustGuard</h1>
             <p class="text-sm text-slate-500">Login or register a new account</p>
         </div>
-
         <div id="authError" class="hidden text-sm px-4 py-3 rounded-lg"></div>
-
         <div class="card rounded-2xl p-6 space-y-4">
-            <input id="authEmail" type="email" placeholder="Email"
-                class="input-field w-full rounded-xl px-4 py-3 text-sm placeholder:text-slate-600">
-            <input id="authPassword" type="password" placeholder="Password"
-                class="input-field w-full rounded-xl px-4 py-3 text-sm placeholder:text-slate-600">
+            <input id="authEmail" type="email" placeholder="Email" class="input-field w-full rounded-xl px-4 py-3 text-sm placeholder:text-slate-600">
+            <input id="authPassword" type="password" placeholder="Password" class="input-field w-full rounded-xl px-4 py-3 text-sm placeholder:text-slate-600">
             <div class="flex gap-3 pt-1">
                 <button onclick="doLogin()" class="btn-primary flex-1 text-white font-semibold text-sm py-3 rounded-xl">Login</button>
                 <button onclick="doRegister()" class="flex-1 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/50 text-white font-medium text-sm py-3 rounded-xl transition-colors">Register</button>
@@ -70,309 +69,346 @@
     </div>
 </div>
 
-<!-- ===== MAIN PORTAL ===== -->
-<div id="portalScreen" class="hidden relative z-10">
+<!-- ===== MAIN PORTAL (SIDEBAR SHELL) ===== -->
+<div id="portalScreen" class="hidden relative z-10 min-h-screen lg:flex">
 
-    <nav class="nav-glass sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="bg-indigo-600/20 border border-indigo-500/30 p-2 rounded-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
-                </div>
-                <span class="font-bold text-lg tracking-wide text-white">TrustGuard</span>
-                <span class="mono text-xs text-indigo-500/60 hidden sm:block">v2.0</span>
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-64 shrink-0 -translate-x-full lg:translate-x-0 transition-transform duration-200
+                bg-[#060d1c]/95 backdrop-blur-xl border-r border-indigo-900/25 flex flex-col">
+        <div class="h-16 flex items-center gap-3 px-5 border-b border-indigo-900/25">
+            <div class="bg-indigo-600/20 border border-indigo-500/30 p-2 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
             </div>
-            <div class="flex items-center gap-4">
-                <span id="navEmail" class="text-xs text-slate-500 mono hidden sm:block"></span>
-                <button onclick="doLogout()" class="text-xs text-slate-600 hover:text-rose-400 transition-colors mono">[ logout ]</button>
-            </div>
-        </div>
-    </nav>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-
-        <!-- STATS -->
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="stat-card-1 rounded-2xl p-6 space-y-3">
-                <p class="section-title">Total Prompt Scans</p>
-                <p id="statTotal" class="text-4xl font-black text-white mono">—</p>
-                <span class="text-xs text-indigo-400/70 mono">overall total</span>
-            </div>
-            <div class="stat-card-2 rounded-2xl p-6 space-y-3">
-                <p class="section-title" style="color:#f43f5e">Threats Blocked</p>
-                <p id="statBlocked" class="text-4xl font-black text-rose-400 mono">—</p>
-                <span id="statRate" class="text-xs text-rose-500/70 mono">threat rate: —</span>
-            </div>
-            <div class="stat-card-3 rounded-2xl p-6 space-y-3">
-                <p class="section-title" style="color:#10b981">Engine Status</p>
-                <div class="flex items-center gap-2 pt-1">
-                    <span class="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <p class="text-xl font-bold text-emerald-400 mono">ACTIVE</p>
-                </div>
-                <span class="text-xs text-emerald-600/70 mono">TrustGuard Detection Engine</span>
-            </div>
-        </section>
-
-        <!-- API KEY MANAGEMENT -->
-        <section class="card rounded-2xl p-6 space-y-6">
             <div>
-                <p class="section-title mb-1">API Key & Domain Management</p>
-                <p class="text-sm text-slate-500">Register your domain to generate an API Key. The engine only accepts requests from verified domains.</p>
+                <p class="font-bold text-base leading-none text-white">TrustGuard</p>
+                <span class="mono text-[10px] text-indigo-500/70">v2.0 · AI Gateway</span>
             </div>
-            <form id="keyForm" class="flex flex-col sm:flex-row gap-3 max-w-2xl">
-                <input type="text" id="domainInput" required placeholder="www.domain.com"
-                    class="input-field flex-1 rounded-xl px-4 py-2.5 text-sm placeholder:text-slate-600">
-                <button type="submit" class="btn-primary text-white font-semibold text-sm px-6 py-2.5 rounded-xl whitespace-nowrap">Generate API Key</button>
-            </form>
-
-            <div id="keyDisplayBox" class="hidden bg-indigo-950/40 border border-indigo-800 p-4 rounded-lg space-y-3">
-                <div class="flex items-start gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                    <div>
-                        <h4 class="font-semibold text-indigo-300 text-sm">Copy Your API Key Now!</h4>
-                        <p class="text-xs text-indigo-400/80">This key is hashed in the database and <strong>WILL NOT BE SHOWN AGAIN</strong> after you close this page.</p>
-                    </div>
-                </div>
-                <div class="flex gap-2 max-w-xl">
-                    <input type="text" id="generatedKeyText" readonly
-                        class="w-full bg-slate-900 border border-indigo-900 font-mono text-xs p-2.5 rounded text-emerald-400 select-all focus:outline-none">
-                    <button onclick="copyKey()" class="bg-slate-800 hover:bg-slate-700 text-xs px-4 rounded border border-slate-700 font-medium whitespace-nowrap">Copy</button>
-                </div>
-            </div>
-
-            <div id="verifyKeyPanel" class="hidden bg-slate-950/50 border border-indigo-800 p-4 rounded-xl space-y-4">
-                <div class="flex items-center justify-between gap-4">
-                    <div>
-                        <p class="text-xs text-slate-500 uppercase tracking-wider">Verification Panel</p>
-                        <h3 class="text-lg font-semibold text-white">Verify Domain & Auto Scan</h3>
-                    </div>
-                    <span id="verifyKeyStatus" class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-950 text-amber-300">Pending</span>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800">
-                        <p class="text-xs text-slate-400 mb-2">Domain</p>
-                        <p id="verifyKeyDomain" class="font-mono text-sm text-white">—</p>
-                    </div>
-                    <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800">
-                        <p class="text-xs text-slate-400 mb-2">Target URL verification</p>
-                        <input id="verifyTargetUrl" type="text" placeholder="https://domain.com"
-                            class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
-                    </div>
-                </div>
-                <div>
-                    <p class="text-xs text-slate-400 mb-2">Verification instructions</p>
-                    <pre id="verifyInstructions" class="whitespace-pre-wrap bg-slate-900/70 border border-slate-800 rounded-lg p-3 text-xs text-slate-300"></pre>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                    <input id="verifyRepoUrl" type="text" placeholder="https://github.com/user/repo"
-                        class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
-                    <input id="verifyBranch" type="text" placeholder="main"
-                        class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
-                    <button id="verifyButton" onclick="submitVerifyKey()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm rounded-lg px-4 py-2 transition-colors">Verify & Scan</button>
-                </div>
-                <div id="verifyResult" class="hidden bg-slate-900 border border-slate-800 rounded-lg p-4 text-sm text-slate-200"></div>
-            </div>
-
-            <div id="keysTableWrap" class="hidden space-y-3">
-                <p class="section-title">Active API Keys</p>
-                <div class="overflow-x-auto rounded-xl border border-indigo-900/20">
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-indigo-950/30 text-slate-500 border-b border-indigo-900/20">
-                            <tr>
-                                <th class="p-3 font-medium mono text-xs">Domain</th>
-                                <th class="p-3 font-medium mono text-xs">Status</th>
-                                <th class="p-3 font-medium mono text-xs">Created</th>
-                                <th class="p-3 font-medium mono text-xs">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="keysTableBody" class="divide-y divide-indigo-900/10 text-slate-300"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- SECURITY TOOLS -->
-        <section class="card rounded-2xl overflow-hidden">
-            <div class="p-6 border-b border-indigo-900/20">
-                <p class="section-title mb-1">Security Tools</p>
-                <p class="text-sm text-slate-500">Test the shield, scan code, a repo, a URL, or upload a ZIP project using your API Key.</p>
-            </div>
-
-            <!-- API KEY SELECTOR -->
-            <div class="px-6 pt-4 pb-3 flex flex-col sm:flex-row gap-3 items-start sm:items-center border-b border-indigo-900/20">
-                <label class="text-xs text-slate-500 mono whitespace-nowrap">API Key:</label>
-                <select id="toolApiKey" class="input-field flex-1 max-w-sm rounded-lg px-3 py-2 text-xs">
-                    <option value="">— Select API Key —</option>
-                </select>
-                <label class="text-xs text-slate-500 mono whitespace-nowrap">Domain:</label>
-                <select id="toolDomain" class="input-field flex-1 max-w-sm rounded-lg px-3 py-2 text-xs">
-                    <option value="">— Select Domain —</option>
-                </select>
-            </div>
-
-            <!-- TABS -->
-            <div class="flex gap-1 px-6 pt-4 border-b border-slate-800 overflow-x-auto">
-                <button onclick="switchTab('shield')" id="tab-shield" class="tool-tab active-tab px-4 py-2 text-xs font-semibold rounded-t-lg whitespace-nowrap">🛡️ Shield Test</button>
-                <button onclick="switchTab('code')" id="tab-code" class="tool-tab px-4 py-2 text-xs font-semibold rounded-t-lg whitespace-nowrap">📄 Scan Code</button>
-                <button onclick="switchTab('repo')" id="tab-repo" class="tool-tab px-4 py-2 text-xs font-semibold rounded-t-lg whitespace-nowrap">🐙 Scan Repo</button>
-                <button onclick="switchTab('url')" id="tab-url" class="tool-tab px-4 py-2 text-xs font-semibold rounded-t-lg whitespace-nowrap">🌐 Scan URL</button>
-                <button onclick="switchTab('upload')" id="tab-upload" class="tool-tab px-4 py-2 text-xs font-semibold rounded-t-lg whitespace-nowrap">📦 Upload ZIP</button>
-            </div>
-
-            <!-- TAB: SHIELD -->
-            <div id="panel-shield" class="tool-panel p-6 space-y-4">
-                <p class="text-xs text-slate-400">Test whether a prompt will be blocked or allowed by the TrustGuard engine.</p>
-                <textarea id="shieldPrompt" rows="4" placeholder="Enter a prompt to test..."
-                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 placeholder:text-slate-600 resize-none"></textarea>
-                <button onclick="runShield()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors">Test Prompt</button>
-                <div id="shieldResult" class="hidden"></div>
-            </div>
-
-            <!-- TAB: SCAN CODE -->
-            <div id="panel-code" class="tool-panel hidden p-6 space-y-4">
-                <p class="text-xs text-slate-400">Scan source code for CVE/CWE, secrets, and security issues.</p>
-                <div class="flex gap-3">
-                    <input id="codeFilename" type="text" placeholder="filename.py" value="code.py"
-                        class="w-48 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500">
-                    <select id="codeEngine" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500">
-                        <option value="hybrid">Hybrid (Rule + ML)</option>
-                        <option value="rule">Rule-based</option>
-                        <option value="ml">ML Only</option>
-                    </select>
-                </div>
-                <textarea id="codeInput" rows="10" placeholder="Paste source code here..."
-                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 text-xs font-mono focus:outline-none focus:border-indigo-500 placeholder:text-slate-600 resize-none"></textarea>
-                <button onclick="runCodeScan()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors">Scan Code</button>
-                <div id="codeResult" class="hidden"></div>
-            </div>
-
-            <!-- TAB: SCAN REPO -->
-            <div id="panel-repo" class="tool-panel hidden p-6 space-y-4">
-                <p class="text-xs text-slate-400">Scan an entire public GitHub repo for CVE/CWE, secrets, and dependency issues.</p>
-                <div class="flex flex-col sm:flex-row gap-3 max-w-2xl">
-                    <input id="repoUrl" type="text" placeholder="https://github.com/user/repo"
-                        class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
-                    <input id="repoBranch" type="text" placeholder="main" value="main"
-                        class="w-28 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
-                    <button onclick="runRepoScan()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">Scan Repo</button>
-                </div>
-                <p class="text-xs text-slate-600">Limit: public repo, size &lt; 200MB, &lt; 500 files.</p>
-                <div id="repoResult" class="hidden"></div>
-            </div>
-
-            <!-- TAB: SCAN URL -->
-            <div id="panel-url" class="tool-panel hidden p-6 space-y-4">
-                <p class="text-xs text-slate-400">Scan a live website — check security headers, exposed paths, CORS, SSL/TLS, and error leaks.</p>
-                <div class="flex flex-col sm:flex-row gap-3 max-w-2xl">
-                    <input id="urlInput" type="text" placeholder="https://target-website.com"
-                        class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
-                    <button onclick="runUrlScan()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">Scan URL</button>
-                </div>
-                <div id="urlResult" class="hidden"></div>
-            </div>
-
-            <!-- TAB: UPLOAD ZIP -->
-            <div id="panel-upload" class="tool-panel hidden p-6 space-y-4">
-                <p class="text-xs text-slate-400">Upload a ZIP project file to scan. Limit: &lt; 200MB after extraction, &lt; 500 files.</p>
-                <div class="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center space-y-3 hover:border-indigo-600 transition-colors">
-                    <p class="text-slate-400 text-sm">Drag a ZIP file here or</p>
-                    <label class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors inline-block">
-                        Choose ZIP File
-                        <input type="file" id="zipFile" accept=".zip" class="hidden" onchange="updateZipLabel()">
-                    </label>
-                    <p id="zipLabel" class="text-xs text-slate-500">No file chosen</p>
-                </div>
-                <button onclick="runUploadScan()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors">Upload & Scan</button>
-                <div id="uploadResult" class="hidden"></div>
-            </div>
-
-        </section>
-
-        <!-- SEO POISON SCANNER -->
-        <section class="rounded-2xl overflow-hidden" style="background:rgba(15,23,42,0.7);border:1px solid rgba(234,179,8,0.15);backdrop-filter:blur(8px)">
-            <div class="p-6 border-b" style="border-color:rgba(234,179,8,0.1)">
-                <div class="flex items-center gap-3 mb-1">
-                    <span class="text-lg">&#128375;</span>
-                    <p class="section-title" style="color:#eab308">SEO Poison Scanner</p>
-                    <span class="ml-auto text-xs px-2 py-0.5 rounded-full font-semibold" style="background:rgba(234,179,8,0.1);color:#eab308;border:1px solid rgba(234,179,8,0.2)">No API Key Required</span>
-                </div>
-                <p class="text-sm text-slate-500">Scan any live website for SEO poisoning &amp; spam injection. Login only &mdash; no API Key or domain needed.</p>
-            </div>
-            <div class="p-6 space-y-4">
-                <div class="flex flex-col sm:flex-row gap-3 max-w-2xl">
-                    <input id="seoUrl" type="text" placeholder="https://target-website.com"
-                        class="flex-1 rounded-lg px-4 py-2.5 text-slate-200 text-sm focus:outline-none bg-slate-900" style="border:1px solid rgba(234,179,8,0.2)">
-                    <div class="flex items-center gap-2">
-                        <label class="text-xs text-slate-500 whitespace-nowrap">Max pages:</label>
-                        <input id="seoMaxPages" type="number" value="20" min="1" max="100"
-                            class="w-20 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none bg-slate-900" style="border:1px solid rgba(234,179,8,0.2)">
-                    </div>
-                    <button onclick="runSeoScan()" class="text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-all whitespace-nowrap" style="background:linear-gradient(135deg,#ca8a04,#a16207)">&#128269; Scan for SEO Poison</button>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-rose-500 inline-block"></span>Spam keyword injection</span>
-                    <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-rose-500 inline-block"></span>Googlebot cloaking</span>
-                    <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-orange-500 inline-block"></span>Hidden elements</span>
-                    <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-orange-500 inline-block"></span>Link farm injection</span>
-                    <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-orange-500 inline-block"></span>Suspicious redirects</span>
-                    <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-yellow-500 inline-block"></span>robots.txt spam</span>
-                </div>
-                <div id="seoResult" class="hidden"></div>
-            </div>
-        </section>
-
-        <!-- SECURITY LOGS -->
-        <section class="card rounded-2xl overflow-hidden">
-            <div class="p-6 border-b border-indigo-900/20 flex items-center justify-between">
-                <div>
-                    <p class="section-title mb-1">Real-Time Security Log</p>
-                    <p class="text-sm text-slate-500">Detailed analysis of AI model exploitation attempts.</p>
-                </div>
-                <button onclick="loadLogs()" class="text-xs mono text-indigo-500 hover:text-indigo-300 transition-colors">[ ↻ refresh ]</button>
-            </div>
-            <!-- ENGINE UPDATE -->
-            <div class="p-6 border-b border-indigo-900/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <p class="section-title mb-1">Detection Engine Update</p>
-                    <p class="text-sm text-slate-500">Update OWASP rule patterns &amp; refresh ML models from HuggingFace.</p>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="updateEngine(true, false)" class="text-xs mono bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-800/50 text-indigo-400 px-3 py-1.5 rounded-lg transition-colors">↑ Rules</button>
-                    <button onclick="updateEngine(false, true)" class="text-xs mono bg-violet-950/60 hover:bg-violet-900/60 border border-violet-800/50 text-violet-400 px-3 py-1.5 rounded-lg transition-colors">↑ Models</button>
-                    <button onclick="updateEngine(true, true)" class="text-xs mono bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-800/50 text-emerald-400 px-3 py-1.5 rounded-lg transition-colors">↑ All</button>
-                </div>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-sm">
-                    <thead>
-                        <tr class="bg-indigo-950/20 text-slate-500 border-b border-indigo-900/20">
-                            <th class="p-4 font-medium mono text-xs">Time/Date</th>
-                            <th class="p-4 font-medium mono text-xs">Origin Domain</th>
-                            <th class="p-4 font-medium mono text-xs">Source Page</th>
-                            <th class="p-4 font-medium mono text-xs">Prompt Input Text</th>
-                            <th class="p-4 font-medium mono text-xs">Attack Type</th>
-                            <th class="p-4 font-medium mono text-xs">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="logsTableBody" class="divide-y divide-slate-800/60 text-slate-300">
-                        <tr><td colspan="6" class="p-8 text-center text-slate-500 text-sm">No logs yet. Send a request via /api/v1/shield to see logs.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-    </main>
-
-    <footer class="border-t border-indigo-900/20 mt-8 py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <span class="mono text-xs text-slate-600">TrustGuard — AI Security Gateway</span>
-            <span class="mono text-xs text-slate-700">Made with ❤️ from Sungai Buloh, Malaysia</span>
         </div>
-    </footer>
+        <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+            <div onclick="go('dashboard')" id="nav-dashboard" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                Dashboard
+            </div>
+            <div onclick="go('keys')" id="nav-keys" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                API Keys
+            </div>
+            <div onclick="go('tools')" id="nav-tools" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                Security Tools
+            </div>
+            <div onclick="go('seo')" id="nav-seo" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                SEO Scanner
+            </div>
+            <div onclick="go('logs')" id="nav-logs" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+                Security Logs
+            </div>
+            <div onclick="go('settings')" id="nav-settings" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+            </div>
+        </nav>
+        <div class="p-3 border-t border-indigo-900/25">
+            <div class="flex items-center gap-3 px-2 py-2 rounded-lg bg-slate-900/40">
+                <div class="h-8 w-8 rounded-full bg-indigo-600/25 border border-indigo-500/30 flex items-center justify-center text-xs font-bold text-indigo-300" id="avatarInitial">U</div>
+                <div class="min-w-0 flex-1">
+                    <p id="navEmail" class="text-xs text-slate-300 truncate">—</p>
+                    <button onclick="doLogout()" class="text-[11px] text-slate-600 hover:text-rose-400 transition-colors mono">[ logout ]</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+    <div id="sidebarOverlay" onclick="toggleSidebar(false)" class="hidden fixed inset-0 z-40 bg-black/50 lg:hidden"></div>
+
+    <!-- MAIN AREA -->
+    <div class="flex-1 min-w-0 flex flex-col">
+        <!-- TOP BAR -->
+        <header class="h-16 sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 bg-[#040a17]/80 backdrop-blur-xl border-b border-indigo-900/25">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar(true)" class="lg:hidden text-slate-400 hover:text-white">
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                </button>
+                <h1 id="pageTitle" class="text-lg font-semibold text-white">Dashboard</h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="hidden sm:flex items-center gap-2 text-xs mono px-3 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-900/40 text-emerald-400">
+                    <span id="engineDot" class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span><span id="engineStatusTop">ACTIVE</span>
+                </span>
+            </div>
+        </header>
+
+        <main class="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] w-full">
+
+            <!-- ============ VIEW: DASHBOARD ============ -->
+            <section id="view-dashboard" class="view active space-y-6">
+                <!-- Stat cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <div class="card rounded-2xl p-5">
+                        <div class="flex items-start justify-between">
+                            <div><p class="section-title">Total Scans</p><p id="statTotal" class="text-3xl font-black text-white mono mt-2">—</p></div>
+                            <div class="p-2 rounded-lg bg-indigo-600/15 border border-indigo-500/20"><svg class="h-5 w-5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+                        </div>
+                        <p class="text-xs text-indigo-400/70 mono mt-2">prompts processed</p>
+                    </div>
+                    <div class="card rounded-2xl p-5">
+                        <div class="flex items-start justify-between">
+                            <div><p class="section-title" style="color:#f43f5e">Threats Blocked</p><p id="statBlocked" class="text-3xl font-black text-rose-400 mono mt-2">—</p></div>
+                            <div class="p-2 rounded-lg bg-rose-600/15 border border-rose-500/20"><svg class="h-5 w-5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg></div>
+                        </div>
+                        <p id="statRate" class="text-xs text-rose-500/70 mono mt-2">threat rate: —</p>
+                    </div>
+                    <div class="card rounded-2xl p-5">
+                        <div class="flex items-start justify-between">
+                            <div><p class="section-title" style="color:#10b981">Active API Keys</p><p id="statKeys" class="text-3xl font-black text-emerald-400 mono mt-2">—</p></div>
+                            <div class="p-2 rounded-lg bg-emerald-600/15 border border-emerald-500/20"><svg class="h-5 w-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777z"/></svg></div>
+                        </div>
+                        <p class="text-xs text-emerald-600/70 mono mt-2">verified domains</p>
+                    </div>
+                    <div class="card rounded-2xl p-5">
+                        <div class="flex items-start justify-between">
+                            <div><p class="section-title" style="color:#a78bfa">ML Engine</p><p id="statMl" class="text-2xl font-black text-violet-300 mono mt-2">—</p></div>
+                            <div class="p-2 rounded-lg bg-violet-600/15 border border-violet-500/20"><svg class="h-5 w-5 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg></div>
+                        </div>
+                        <p class="text-xs text-violet-400/60 mono mt-2">HuggingFace models</p>
+                    </div>
+                </div>
+                <!-- Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div class="card rounded-2xl p-5 lg:col-span-2">
+                        <p class="section-title mb-3">Threat Activity — last 14 days</p>
+                        <div class="h-64"><canvas id="trendChart"></canvas></div>
+                    </div>
+                    <div class="card rounded-2xl p-5">
+                        <p class="section-title mb-3">Attack Type Distribution</p>
+                        <div class="h-64 flex items-center justify-center"><canvas id="attackChart"></canvas></div>
+                    </div>
+                </div>
+                <!-- Recent activity -->
+                <div class="card rounded-2xl overflow-hidden">
+                    <div class="p-5 border-b border-indigo-900/20 flex items-center justify-between">
+                        <p class="section-title">Recent Activity</p>
+                        <button onclick="go('logs')" class="text-xs mono text-indigo-500 hover:text-indigo-300 transition-colors">view all →</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead><tr class="bg-indigo-950/20 text-slate-500 border-b border-indigo-900/20">
+                                <th class="p-3 font-medium mono text-xs">Time</th><th class="p-3 font-medium mono text-xs">Domain</th>
+                                <th class="p-3 font-medium mono text-xs">Attack Type</th><th class="p-3 font-medium mono text-xs">Status</th>
+                            </tr></thead>
+                            <tbody id="recentBody" class="divide-y divide-slate-800/60 text-slate-300">
+                                <tr><td colspan="4" class="p-6 text-center text-slate-500 text-sm">No activity yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ VIEW: API KEYS ============ -->
+            <section id="view-keys" class="view space-y-6">
+                <div class="card rounded-2xl p-6 space-y-6">
+                    <div>
+                        <p class="section-title mb-1">API Key & Domain Management</p>
+                        <p class="text-sm text-slate-500">Register your domain to generate an API Key. The engine only accepts requests from verified domains.</p>
+                    </div>
+                    <form id="keyForm" class="flex flex-col sm:flex-row gap-3 max-w-2xl">
+                        <input type="text" id="domainInput" required placeholder="www.domain.com" class="input-field flex-1 rounded-xl px-4 py-2.5 text-sm placeholder:text-slate-600">
+                        <button type="submit" class="btn-primary text-white font-semibold text-sm px-6 py-2.5 rounded-xl whitespace-nowrap">Generate API Key</button>
+                    </form>
+                    <div id="keyDisplayBox" class="hidden bg-indigo-950/40 border border-indigo-800 p-4 rounded-lg space-y-3">
+                        <div class="flex items-start gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <div><h4 class="font-semibold text-indigo-300 text-sm">Copy Your API Key Now!</h4><p class="text-xs text-indigo-400/80">This key is hashed in the database and <strong>WILL NOT BE SHOWN AGAIN</strong> after you close this page.</p></div>
+                        </div>
+                        <div class="flex gap-2 max-w-xl">
+                            <input type="text" id="generatedKeyText" readonly class="w-full bg-slate-900 border border-indigo-900 font-mono text-xs p-2.5 rounded text-emerald-400 select-all focus:outline-none">
+                            <button onclick="copyKey()" class="bg-slate-800 hover:bg-slate-700 text-xs px-4 rounded border border-slate-700 font-medium whitespace-nowrap">Copy</button>
+                        </div>
+                    </div>
+                    <div id="verifyKeyPanel" class="hidden bg-slate-950/50 border border-indigo-800 p-4 rounded-xl space-y-4">
+                        <div class="flex items-center justify-between gap-4">
+                            <div><p class="text-xs text-slate-500 uppercase tracking-wider">Verification Panel</p><h3 class="text-lg font-semibold text-white">Verify Domain & Auto Scan</h3></div>
+                            <span id="verifyKeyStatus" class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-950 text-amber-300">Pending</span>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800"><p class="text-xs text-slate-400 mb-2">Domain</p><p id="verifyKeyDomain" class="font-mono text-sm text-white">—</p></div>
+                            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800"><p class="text-xs text-slate-400 mb-2">Target URL verification</p><input id="verifyTargetUrl" type="text" placeholder="https://domain.com" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500"></div>
+                        </div>
+                        <div><p class="text-xs text-slate-400 mb-2">Verification instructions</p><pre id="verifyInstructions" class="whitespace-pre-wrap bg-slate-900/70 border border-slate-800 rounded-lg p-3 text-xs text-slate-300"></pre></div>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                            <input id="verifyRepoUrl" type="text" placeholder="https://github.com/user/repo" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
+                            <input id="verifyBranch" type="text" placeholder="main" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
+                            <button id="verifyButton" onclick="submitVerifyKey()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm rounded-lg px-4 py-2 transition-colors">Verify & Scan</button>
+                        </div>
+                        <div id="verifyResult" class="hidden bg-slate-900 border border-slate-800 rounded-lg p-4 text-sm text-slate-200"></div>
+                    </div>
+                    <div id="keysTableWrap" class="hidden space-y-3">
+                        <p class="section-title">Active API Keys</p>
+                        <div class="overflow-x-auto rounded-xl border border-indigo-900/20">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-indigo-950/30 text-slate-500 border-b border-indigo-900/20"><tr>
+                                    <th class="p-3 font-medium mono text-xs">Domain</th><th class="p-3 font-medium mono text-xs">Status</th><th class="p-3 font-medium mono text-xs">Created</th><th class="p-3 font-medium mono text-xs">Action</th>
+                                </tr></thead>
+                                <tbody id="keysTableBody" class="divide-y divide-indigo-900/10 text-slate-300"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ VIEW: SECURITY TOOLS ============ -->
+            <section id="view-tools" class="view space-y-6">
+                <div class="card rounded-2xl overflow-hidden">
+                    <div class="p-6 border-b border-indigo-900/20">
+                        <p class="section-title mb-1">Security Tools</p>
+                        <p class="text-sm text-slate-500">Test the shield, scan code, a repo, a URL, or upload a ZIP project using your API Key.</p>
+                    </div>
+                    <div class="px-6 pt-4 pb-3 flex flex-col sm:flex-row gap-3 items-start sm:items-center border-b border-indigo-900/20">
+                        <label class="text-xs text-slate-500 mono whitespace-nowrap">API Key:</label>
+                        <select id="toolApiKey" class="input-field flex-1 max-w-sm rounded-lg px-3 py-2 text-xs"><option value="">— Select API Key —</option></select>
+                        <label class="text-xs text-slate-500 mono whitespace-nowrap">Domain:</label>
+                        <select id="toolDomain" class="input-field flex-1 max-w-sm rounded-lg px-3 py-2 text-xs"><option value="">— Select Domain —</option></select>
+                    </div>
+                    <div class="flex gap-1 px-6 pt-4 border-b border-slate-800 overflow-x-auto">
+                        <button onclick="switchTab('shield')" id="tab-shield" class="tool-tab active-tab px-4 py-2 text-xs font-semibold rounded-t-lg whitespace-nowrap">🛡️ Shield Test</button>
+                        <button onclick="switchTab('code')" id="tab-code" class="tool-tab px-4 py-2 text-xs font-semibold rounded-t-lg whitespace-nowrap">📄 Scan Code</button>
+                        <button onclick="switchTab('repo')" id="tab-repo" class="tool-tab px-4 py-2 text-xs font-semibold rounded-t-lg whitespace-nowrap">🐙 Scan Repo</button>
+                        <button onclick="switchTab('url')" id="tab-url" class="tool-tab px-4 py-2 text-xs font-semibold rounded-t-lg whitespace-nowrap">🌐 Scan URL</button>
+                        <button onclick="switchTab('upload')" id="tab-upload" class="tool-tab px-4 py-2 text-xs font-semibold rounded-t-lg whitespace-nowrap">📦 Upload ZIP</button>
+                    </div>
+                    <div id="panel-shield" class="tool-panel p-6 space-y-4">
+                        <p class="text-xs text-slate-400">Test whether a prompt will be blocked or allowed by the TrustGuard engine.</p>
+                        <textarea id="shieldPrompt" rows="4" placeholder="Enter a prompt to test..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 placeholder:text-slate-600 resize-none"></textarea>
+                        <button onclick="runShield()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors">Test Prompt</button>
+                        <div id="shieldResult" class="hidden"></div>
+                    </div>
+                    <div id="panel-code" class="tool-panel hidden p-6 space-y-4">
+                        <p class="text-xs text-slate-400">Scan source code for CVE/CWE, secrets, and security issues.</p>
+                        <div class="flex gap-3">
+                            <input id="codeFilename" type="text" placeholder="filename.py" value="code.py" class="w-48 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500">
+                            <select id="codeEngine" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500">
+                                <option value="hybrid">Hybrid (Rule + ML)</option><option value="rule">Rule-based</option><option value="ml">ML Only</option>
+                            </select>
+                        </div>
+                        <textarea id="codeInput" rows="10" placeholder="Paste source code here..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 text-xs font-mono focus:outline-none focus:border-indigo-500 placeholder:text-slate-600 resize-none"></textarea>
+                        <button onclick="runCodeScan()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors">Scan Code</button>
+                        <div id="codeResult" class="hidden"></div>
+                    </div>
+                    <div id="panel-repo" class="tool-panel hidden p-6 space-y-4">
+                        <p class="text-xs text-slate-400">Scan an entire public GitHub repo for CVE/CWE, secrets, and dependency issues.</p>
+                        <div class="flex flex-col sm:flex-row gap-3 max-w-2xl">
+                            <input id="repoUrl" type="text" placeholder="https://github.com/user/repo" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
+                            <input id="repoBranch" type="text" placeholder="main" value="main" class="w-28 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
+                            <button onclick="runRepoScan()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">Scan Repo</button>
+                        </div>
+                        <p class="text-xs text-slate-600">Limit: public repo, size &lt; 200MB, &lt; 500 files.</p>
+                        <div id="repoResult" class="hidden"></div>
+                    </div>
+                    <div id="panel-url" class="tool-panel hidden p-6 space-y-4">
+                        <p class="text-xs text-slate-400">Scan a live website — check security headers, exposed paths, CORS, SSL/TLS, and error leaks.</p>
+                        <div class="flex flex-col sm:flex-row gap-3 max-w-2xl">
+                            <input id="urlInput" type="text" placeholder="https://target-website.com" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
+                            <button onclick="runUrlScan()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">Scan URL</button>
+                        </div>
+                        <div id="urlResult" class="hidden"></div>
+                    </div>
+                    <div id="panel-upload" class="tool-panel hidden p-6 space-y-4">
+                        <p class="text-xs text-slate-400">Upload a ZIP project file to scan. Limit: &lt; 200MB after extraction, &lt; 500 files.</p>
+                        <div class="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center space-y-3 hover:border-indigo-600 transition-colors">
+                            <p class="text-slate-400 text-sm">Drag a ZIP file here or</p>
+                            <label class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors inline-block">Choose ZIP File<input type="file" id="zipFile" accept=".zip" class="hidden" onchange="updateZipLabel()"></label>
+                            <p id="zipLabel" class="text-xs text-slate-500">No file chosen</p>
+                        </div>
+                        <button onclick="runUploadScan()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors">Upload & Scan</button>
+                        <div id="uploadResult" class="hidden"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ VIEW: SEO SCANNER ============ -->
+            <section id="view-seo" class="view space-y-6">
+                <div class="rounded-2xl overflow-hidden" style="background:rgba(15,23,42,0.6);border:1px solid rgba(234,179,8,0.15);backdrop-filter:blur(10px)">
+                    <div class="p-6 border-b" style="border-color:rgba(234,179,8,0.1)">
+                        <div class="flex items-center gap-3 mb-1">
+                            <span class="text-lg">&#128375;</span><p class="section-title" style="color:#eab308">SEO Poison Scanner</p>
+                            <span class="ml-auto text-xs px-2 py-0.5 rounded-full font-semibold" style="background:rgba(234,179,8,0.1);color:#eab308;border:1px solid rgba(234,179,8,0.2)">No API Key Required</span>
+                        </div>
+                        <p class="text-sm text-slate-500">Scan any live website for SEO poisoning &amp; spam injection. Login only &mdash; no API Key or domain needed.</p>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div class="flex flex-col sm:flex-row gap-3 max-w-2xl">
+                            <input id="seoUrl" type="text" placeholder="https://target-website.com" class="flex-1 rounded-lg px-4 py-2.5 text-slate-200 text-sm focus:outline-none bg-slate-900" style="border:1px solid rgba(234,179,8,0.2)">
+                            <div class="flex items-center gap-2"><label class="text-xs text-slate-500 whitespace-nowrap">Max pages:</label>
+                                <input id="seoMaxPages" type="number" value="20" min="1" max="100" class="w-20 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none bg-slate-900" style="border:1px solid rgba(234,179,8,0.2)"></div>
+                            <button onclick="runSeoScan()" class="text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-all whitespace-nowrap" style="background:linear-gradient(135deg,#ca8a04,#a16207)">&#128269; Scan for SEO Poison</button>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-rose-500 inline-block"></span>Spam keyword injection</span>
+                            <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-rose-500 inline-block"></span>Googlebot cloaking</span>
+                            <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-orange-500 inline-block"></span>Hidden elements</span>
+                            <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-orange-500 inline-block"></span>Link farm injection</span>
+                            <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-orange-500 inline-block"></span>Suspicious redirects</span>
+                            <span class="flex items-center gap-2 text-xs text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-yellow-500 inline-block"></span>robots.txt spam</span>
+                        </div>
+                        <div id="seoResult" class="hidden"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ VIEW: LOGS ============ -->
+            <section id="view-logs" class="view space-y-6">
+                <div class="card rounded-2xl overflow-hidden">
+                    <div class="p-6 border-b border-indigo-900/20 flex items-center justify-between">
+                        <div><p class="section-title mb-1">Real-Time Security Log</p><p class="text-sm text-slate-500">Detailed analysis of AI model exploitation attempts.</p></div>
+                        <button onclick="loadLogs()" class="text-xs mono text-indigo-500 hover:text-indigo-300 transition-colors">[ ↻ refresh ]</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead><tr class="bg-indigo-950/20 text-slate-500 border-b border-indigo-900/20">
+                                <th class="p-4 font-medium mono text-xs">Time/Date</th><th class="p-4 font-medium mono text-xs">Origin Domain</th><th class="p-4 font-medium mono text-xs">Source Page</th>
+                                <th class="p-4 font-medium mono text-xs">Prompt Input Text</th><th class="p-4 font-medium mono text-xs">Attack Type</th><th class="p-4 font-medium mono text-xs">Action</th>
+                            </tr></thead>
+                            <tbody id="logsTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+                                <tr><td colspan="6" class="p-8 text-center text-slate-500 text-sm">No logs yet. Send a request via /api/v1/shield to see logs.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ VIEW: SETTINGS ============ -->
+            <section id="view-settings" class="view space-y-6">
+                <div class="card rounded-2xl p-6 space-y-5">
+                    <div><p class="section-title mb-1">Detection Engine Update</p><p class="text-sm text-slate-500">Update OWASP rule patterns &amp; refresh ML models from HuggingFace.</p></div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="updateEngine(true, false)" class="text-xs mono bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-800/50 text-indigo-400 px-4 py-2 rounded-lg transition-colors">↑ Update Rules</button>
+                        <button onclick="updateEngine(false, true)" class="text-xs mono bg-violet-950/60 hover:bg-violet-900/60 border border-violet-800/50 text-violet-400 px-4 py-2 rounded-lg transition-colors">↑ Refresh Models</button>
+                        <button onclick="updateEngine(true, true)" class="text-xs mono bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-800/50 text-emerald-400 px-4 py-2 rounded-lg transition-colors">↑ Update All</button>
+                    </div>
+                </div>
+                <div class="card rounded-2xl p-6 space-y-4">
+                    <p class="section-title">Account</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        <div class="bg-slate-900/50 rounded-lg p-4 border border-slate-800"><p class="text-xs text-slate-500 mb-1">Email</p><p id="setEmail" class="text-slate-200 mono">—</p></div>
+                        <div class="bg-slate-900/50 rounded-lg p-4 border border-slate-800"><p class="text-xs text-slate-500 mb-1">Engine Version</p><p id="setVersion" class="text-slate-200 mono">—</p></div>
+                    </div>
+                    <button onclick="doLogout()" class="text-xs mono bg-rose-950/50 hover:bg-rose-900/50 border border-rose-900/50 text-rose-400 px-4 py-2 rounded-lg transition-colors">Logout</button>
+                </div>
+            </section>
+
+            <footer class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-indigo-900/20">
+                <span class="mono text-xs text-slate-600">TrustGuard — AI Security Gateway</span>
+                <span class="mono text-xs text-slate-700">Made with ❤️ from Sungai Buloh, Malaysia</span>
+            </footer>
+        </main>
+    </div>
 </div>
 
 <script>
     const API = '';
+    const PAGE_TITLES = { dashboard:'Dashboard', keys:'API Keys', tools:'Security Tools', seo:'SEO Scanner', logs:'Security Logs', settings:'Settings' };
+    let trendChart = null, attackChart = null;
 
     function parseDetail(detail, fallback) {
         if (!detail) return fallback;
@@ -381,43 +417,46 @@
         if (typeof detail === 'object') return detail.description || detail.title || detail.message || fallback;
         return fallback;
     }
-
     function getToken() { return localStorage.getItem('aisec_token'); }
     function getEmail() { return localStorage.getItem('aisec_email'); }
+    function escHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+    // ── Navigation ──────────────────────────────────────────────────────────
+    function go(page) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById('view-' + page).classList.add('active');
+        document.getElementById('nav-' + page).classList.add('active');
+        document.getElementById('pageTitle').textContent = PAGE_TITLES[page] || 'Dashboard';
+        toggleSidebar(false);
+    }
+    function toggleSidebar(show) {
+        const sb = document.getElementById('sidebar'), ov = document.getElementById('sidebarOverlay');
+        if (show) { sb.classList.remove('-translate-x-full'); ov.classList.remove('hidden'); }
+        else { sb.classList.add('-translate-x-full'); ov.classList.add('hidden'); }
+    }
+
+    // ── Auth ────────────────────────────────────────────────────────────────
     async function doRegister() {
         const email = document.getElementById('authEmail').value.trim();
         const password = document.getElementById('authPassword').value;
-        const res = await fetch(`${API}/portal/auth/register`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
+        const res = await fetch(`${API}/portal/auth/register`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ email, password }) });
         const data = await res.json();
         if (!res.ok) return showAuthError(parseDetail(data.detail, 'Registration failed'));
         showAuthError('Account registered successfully! Please log in.', 'ok');
     }
-
     async function doLogin() {
         const email = document.getElementById('authEmail').value.trim();
         const password = document.getElementById('authPassword').value;
-        const res = await fetch(`${API}/portal/auth/login`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
+        const res = await fetch(`${API}/portal/auth/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ email, password }) });
         const data = await res.json();
         if (!res.ok) return showAuthError(parseDetail(data.detail, 'Login failed'));
         localStorage.setItem('aisec_token', data.access_token);
         localStorage.setItem('aisec_email', email);
         showPortal();
     }
-
-    function doLogout() {
-        localStorage.removeItem('aisec_token');
-        localStorage.removeItem('aisec_email');
-        window.location.href = '/';
-    }
-
-    function showAuthError(msg, type = 'error') {
+    function doLogout() { localStorage.removeItem('aisec_token'); localStorage.removeItem('aisec_email'); window.location.href = '/'; }
+    function showAuthError(msg, type='error') {
         const el = document.getElementById('authError');
         el.textContent = msg;
         el.className = type === 'ok'
@@ -425,22 +464,10 @@
             : 'bg-rose-950/50 border border-rose-800 text-rose-400 text-sm px-4 py-3 rounded-lg';
         el.classList.remove('hidden');
     }
-
-    function authHeaders() {
-        return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` };
-    }
-
-    function showPortal() {
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('portalScreen').classList.remove('hidden');
-        document.getElementById('navEmail').textContent = getEmail();
-        loadStats(); loadKeys(); loadLogs();
-    }
-
+    function authHeaders() { return { 'Content-Type':'application/json', 'Authorization':`Bearer ${getToken()}` }; }
     function handleUnauthorized(res) {
         if (res.status === 401) {
-            localStorage.removeItem('aisec_token');
-            localStorage.removeItem('aisec_email');
+            localStorage.removeItem('aisec_token'); localStorage.removeItem('aisec_email');
             document.getElementById('portalScreen').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('hidden');
             showAuthError('Session expired. Please log in again.');
@@ -448,7 +475,30 @@
         }
         return false;
     }
+    function showPortal() {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('portalScreen').classList.remove('hidden');
+        const email = getEmail();
+        document.getElementById('navEmail').textContent = email;
+        document.getElementById('setEmail').textContent = email;
+        document.getElementById('avatarInitial').textContent = (email || 'U').charAt(0).toUpperCase();
+        go('dashboard');
+        loadHealth(); loadStats(); loadKeys(); loadLogs();
+    }
 
+    // ── Health / ML status ──────────────────────────────────────────────────
+    async function loadHealth() {
+        try {
+            const res = await fetch(`${API}/health`);
+            const d = await res.json();
+            document.getElementById('statMl').textContent = d.ml_available ? 'ONLINE' : 'OFFLINE';
+            document.getElementById('statMl').className = 'text-2xl font-black mono mt-2 ' + (d.ml_available ? 'text-emerald-400' : 'text-slate-500');
+            document.getElementById('setVersion').textContent = d.version || '—';
+            document.getElementById('engineStatusTop').textContent = d.engine || 'ACTIVE';
+        } catch(e) {}
+    }
+
+    // ── Stats + charts ────────────────────────────────────────────────────────
     async function loadStats() {
         const res = await fetch(`${API}/portal/stats`, { headers: authHeaders() });
         if (handleUnauthorized(res)) return;
@@ -457,16 +507,72 @@
         document.getElementById('statTotal').textContent = d.total_requests.toLocaleString();
         document.getElementById('statBlocked').textContent = d.total_blocked.toLocaleString();
         const rate = d.total_requests > 0 ? ((d.total_blocked / d.total_requests) * 100).toFixed(2) : '0.00';
-        document.getElementById('statRate').textContent = `Threat rate: ${rate}%`;
+        document.getElementById('statRate').textContent = `threat rate: ${rate}%`;
     }
 
+    function renderCharts(logs) {
+        // Build 14-day trend from logs (fallback to empty buckets)
+        const days = [], blockedByDay = {}, allowedByDay = {};
+        for (let i = 13; i >= 0; i--) {
+            const dt = new Date(); dt.setDate(dt.getDate() - i);
+            const key = dt.toISOString().slice(0,10);
+            days.push(key.slice(5)); blockedByDay[key] = 0; allowedByDay[key] = 0;
+        }
+        const attackCounts = {};
+        (logs || []).forEach(l => {
+            const key = (l.created_at || '').slice(0,10);
+            if (l.status === 'BLOCKED') { if (key in blockedByDay) blockedByDay[key]++; const t = l.attack_type || 'UNKNOWN'; attackCounts[t] = (attackCounts[t]||0)+1; }
+            else { if (key in allowedByDay) allowedByDay[key]++; }
+        });
+        const blockedSeries = Object.keys(blockedByDay).map(k => blockedByDay[k]);
+        const allowedSeries = Object.keys(allowedByDay).map(k => allowedByDay[k]);
+        const gridColor = 'rgba(99,102,241,0.08)', tickColor = '#64748b';
+
+        if (trendChart) trendChart.destroy();
+        trendChart = new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: { labels: days, datasets: [
+                { label:'Blocked', data:blockedSeries, borderColor:'#f43f5e', backgroundColor:'rgba(244,63,94,0.12)', fill:true, tension:0.35, pointRadius:2 },
+                { label:'Allowed', data:allowedSeries, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,0.10)', fill:true, tension:0.35, pointRadius:2 },
+            ]},
+            options: { responsive:true, maintainAspectRatio:false,
+                plugins:{ legend:{ labels:{ color:'#94a3b8', usePointStyle:true, boxWidth:8, font:{size:11} } } },
+                scales:{ x:{ grid:{color:gridColor}, ticks:{color:tickColor, font:{size:10}} }, y:{ grid:{color:gridColor}, ticks:{color:tickColor, font:{size:10}}, beginAtZero:true } } }
+        });
+
+        const labels = Object.keys(attackCounts);
+        const palette = ['#f43f5e','#fb923c','#eab308','#818cf8','#a78bfa','#22d3ee','#f472b6'];
+        if (attackChart) attackChart.destroy();
+        attackChart = new Chart(document.getElementById('attackChart'), {
+            type: 'doughnut',
+            data: { labels: labels.length ? labels : ['No blocked threats'],
+                datasets: [{ data: labels.length ? labels.map(l=>attackCounts[l]) : [1],
+                    backgroundColor: labels.length ? labels.map((_,i)=>palette[i%palette.length]) : ['#1e293b'],
+                    borderColor:'#0b1424', borderWidth:2 }] },
+            options: { responsive:true, maintainAspectRatio:false, cutout:'62%',
+                plugins:{ legend:{ position:'bottom', labels:{ color:'#94a3b8', usePointStyle:true, boxWidth:8, font:{size:10}, padding:10 } } } }
+        });
+    }
+
+    function renderRecent(logs) {
+        const tbody = document.getElementById('recentBody');
+        if (!logs || logs.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-500 text-sm">No activity yet.</td></tr>'; return; }
+        tbody.innerHTML = logs.slice(0,5).map(l => {
+            const blocked = l.status === 'BLOCKED';
+            return `<tr class="hover:bg-slate-800/20 transition-colors">
+                <td class="p-3 font-mono text-xs text-slate-500">${new Date(l.created_at).toLocaleString('en-US')}</td>
+                <td class="p-3 text-slate-400">${escHtml(l.source_domain || '—')}</td>
+                <td class="p-3"><span class="px-2 py-0.5 text-xs font-semibold rounded-full ${blocked ? 'bg-rose-950 text-rose-400 border border-rose-900' : 'bg-slate-900 text-slate-500'}">${escHtml(l.attack_type)}</span></td>
+                <td class="p-3">${blocked ? '<span class="text-rose-500 font-bold text-xs">BLOCKED</span>' : '<span class="text-emerald-500 font-bold text-xs">ALLOWED</span>'}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    // ── API Keys ──────────────────────────────────────────────────────────────
     document.getElementById('keyForm').addEventListener('submit', async function (e) {
         e.preventDefault();
         const domain = document.getElementById('domainInput').value.trim();
-        const res = await fetch(`${API}/portal/api-key/generate`, {
-            method: 'POST', headers: authHeaders(),
-            body: JSON.stringify({ allowed_domain: domain })
-        });
+        const res = await fetch(`${API}/portal/api-key/generate`, { method:'POST', headers:authHeaders(), body:JSON.stringify({ allowed_domain: domain }) });
         const data = await res.json();
         if (!res.ok) return alert(data.detail || 'Failed to generate key');
         document.getElementById('generatedKeyText').value = data.api_key;
@@ -474,45 +580,48 @@
         document.getElementById('domainInput').value = '';
         loadKeys(); loadStats();
     });
-
     async function loadKeys() {
         const res = await fetch(`${API}/portal/api-keys`, { headers: authHeaders() });
         if (handleUnauthorized(res)) return;
         if (!res.ok) return;
         const keys = await res.json();
         populateToolSelectors(keys);
+        const activeCount = keys.filter(k => k.is_active).length;
+        document.getElementById('statKeys').textContent = activeCount;
         if (keys.length === 0) { document.getElementById('keysTableWrap').classList.add('hidden'); return; }
         document.getElementById('keysTableWrap').classList.remove('hidden');
         document.getElementById('keysTableBody').innerHTML = keys.map(k => `
             <tr class="hover:bg-slate-800/20 transition-colors">
-                <td class="p-3 text-slate-300">${k.allowed_domain}</td>
+                <td class="p-3 text-slate-300">${escHtml(k.allowed_domain)}</td>
                 <td class="p-3"><span class="px-2 py-0.5 text-xs font-semibold rounded-full ${k.is_active ? 'bg-emerald-950 text-emerald-400 border border-emerald-900' : 'bg-slate-900 text-slate-500'}">${k.is_active ? 'ACTIVE' : 'REVOKED'}</span></td>
                 <td class="p-3 font-mono text-xs text-slate-500">${new Date(k.created_at).toLocaleString('en-US')}</td>
                 <td class="p-3">${k.is_active ? `<button onclick="revokeKey('${k.id}')" class="text-xs text-rose-500 hover:text-rose-400 transition-colors">Revoke</button>` : '—'}</td>
             </tr>`).join('');
     }
-
     async function revokeKey(id) {
         if (!confirm('Revoke this key? This action cannot be undone.')) return;
-        await fetch(`${API}/portal/api-key/${id}`, { method: 'DELETE', headers: authHeaders() });
+        await fetch(`${API}/portal/api-key/${id}`, { method:'DELETE', headers:authHeaders() });
         loadKeys();
     }
 
+    // ── Logs ────────────────────────────────────────────────────────────────
     async function loadLogs() {
         const res = await fetch(`${API}/portal/logs`, { headers: authHeaders() });
         if (handleUnauthorized(res)) return;
         if (!res.ok) return;
         const logs = await res.json();
+        renderCharts(logs);
+        renderRecent(logs);
         const tbody = document.getElementById('logsTableBody');
         if (logs.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-500 text-sm">No logs yet.</td></tr>'; return; }
         tbody.innerHTML = logs.map(l => {
             const blocked = l.status === 'BLOCKED';
             return `<tr class="hover:bg-slate-800/20 transition-colors">
                 <td class="p-4 font-mono text-xs text-slate-500">${new Date(l.created_at).toLocaleString('en-US')}</td>
-                <td class="p-4 text-slate-400">${l.source_domain}</td>
+                <td class="p-4 text-slate-400">${escHtml(l.source_domain)}</td>
                 <td class="p-4 font-mono text-xs text-slate-500">${l.source_page ? escHtml(l.source_page) : '<span class="text-slate-700">—</span>'}</td>
                 <td class="p-4 max-w-xs truncate font-mono text-xs ${blocked ? 'text-rose-300 bg-rose-950/10' : 'text-slate-400'} rounded">"${escHtml(l.input_text)}"</td>
-                <td class="p-4"><span class="px-2 py-0.5 text-xs font-semibold rounded-full ${blocked ? 'bg-rose-950 text-rose-400 border border-rose-900' : 'bg-slate-900 text-slate-500'}">${l.attack_type}</span></td>
+                <td class="p-4"><span class="px-2 py-0.5 text-xs font-semibold rounded-full ${blocked ? 'bg-rose-950 text-rose-400 border border-rose-900' : 'bg-slate-900 text-slate-500'}">${escHtml(l.attack_type)}</span></td>
                 <td class="p-4">${blocked ? '<span class="text-rose-500 font-bold text-xs">BLOCKED</span>' : '<span class="text-emerald-500 font-bold text-xs">ALLOWED</span>'}</td>
             </tr>`;
         }).join('');
@@ -525,15 +634,8 @@
         alert('API Key copied! Store it somewhere safe.');
     }
 
-    function escHtml(str) {
-        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
     async function updateEngine(rules, models) {
-        const res = await fetch(`${API}/admin/update`, {
-            method: 'POST', headers: authHeaders(),
-            body: JSON.stringify({ update_rules: rules, update_models: models })
-        });
+        const res = await fetch(`${API}/admin/update`, { method:'POST', headers:authHeaders(), body:JSON.stringify({ update_rules: rules, update_models: models }) });
         const d = await res.json();
         if (!res.ok) return alert('Failed: ' + (d.detail || 'Unknown error'));
         const msg = [
@@ -543,10 +645,10 @@
             '\nModels will re-download on the next scan request.'
         ].filter(Boolean).join('\n');
         alert(msg);
+        loadHealth();
     }
 
     // ── Security Tools ─────────────────────────────────────────────────────
-
     function switchTab(name) {
         ['shield','code','repo','url','upload'].forEach(t => {
             document.getElementById('panel-' + t).classList.add('hidden');
@@ -555,69 +657,52 @@
         document.getElementById('panel-' + name).classList.remove('hidden');
         document.getElementById('tab-' + name).classList.add('active-tab');
     }
-
     function getToolHeaders() {
         const key = document.getElementById('toolApiKey').value;
         const domain = document.getElementById('toolDomain').value;
         if (!key || !domain) { alert('Please select an API Key and Domain first.'); return null; }
         return { 'X-API-Key': key, 'X-Origin-Domain': domain };
     }
-
     function populateToolSelectors(keys) {
         const keyEl = document.getElementById('toolApiKey');
         const domEl = document.getElementById('toolDomain');
         const active = keys.filter(k => k.is_active);
         keyEl.innerHTML = '<option value="">— Select API Key —</option>' +
-            active.map(k => `<option value="${k.id}" data-domain="${k.allowed_domain}">${k.allowed_domain} (${k.id.slice(0,8)}…)</option>`).join('');
+            active.map(k => `<option value="${k.id}" data-domain="${escHtml(k.allowed_domain)}">${escHtml(k.allowed_domain)} (${k.id.slice(0,8)}…)</option>`).join('');
         domEl.innerHTML = '<option value="">— Select Domain —</option>' +
-            active.map(k => `<option value="${k.allowed_domain}">${k.allowed_domain}</option>`).join('');
+            active.map(k => `<option value="${escHtml(k.allowed_domain)}">${escHtml(k.allowed_domain)}</option>`).join('');
         keyEl.addEventListener('change', () => {
             const opt = keyEl.selectedOptions[0];
             if (opt && opt.dataset.domain) domEl.value = opt.dataset.domain;
         });
     }
-
-    function showScanResult(elId, data) {
-        const el = document.getElementById(elId);
-        el.classList.remove('hidden');
-        el.innerHTML = renderScanResult(data);
-    }
-
+    function showScanResult(elId, data) { const el = document.getElementById(elId); el.classList.remove('hidden'); el.innerHTML = renderScanResult(data); }
     function renderScanResult(d) {
         if (d.status === 'ALLOWED') return `<div class="bg-emerald-950/40 border border-emerald-800 rounded-lg p-4 text-emerald-400 font-semibold">✅ ALLOWED — Prompt is safe.</div>`;
-        if (d.status === 'BLOCKED') return `<div class="bg-rose-950/40 border border-rose-800 rounded-lg p-4 space-y-1"><p class="text-rose-400 font-semibold">🚫 BLOCKED</p><p class="text-xs text-rose-300">Reason: ${d.reason || d.attack_type || '—'}</p></div>`;
-
+        if (d.status === 'BLOCKED') return `<div class="bg-rose-950/40 border border-rose-800 rounded-lg p-4 space-y-1"><p class="text-rose-400 font-semibold">🚫 BLOCKED</p><p class="text-xs text-rose-300">Reason: ${escHtml(d.reason || d.attack_type || '—')}</p></div>`;
         const total = d.total_issues ?? 0;
         const sb = d.severity_breakdown || {};
         const score = d.compliance_score || {};
         const vulns = d.vulnerabilities || d.issues || [];
-
         let html = `<div class="space-y-4">`;
-
-        // Summary bar
         html += `<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div class="bg-slate-900 border border-slate-700 rounded-lg p-3 text-center"><p class="text-2xl font-bold text-white">${total}</p><p class="text-xs text-slate-400">Total Issues</p></div>
             <div class="bg-rose-950/30 border border-rose-900 rounded-lg p-3 text-center"><p class="text-2xl font-bold text-rose-400">${sb.critical ?? 0}</p><p class="text-xs text-slate-400">Critical</p></div>
             <div class="bg-orange-950/30 border border-orange-900 rounded-lg p-3 text-center"><p class="text-2xl font-bold text-orange-400">${sb.high ?? 0}</p><p class="text-xs text-slate-400">High</p></div>
             <div class="bg-yellow-950/30 border border-yellow-900 rounded-lg p-3 text-center"><p class="text-2xl font-bold text-yellow-400">${(sb.medium ?? 0) + (sb.low ?? 0)}</p><p class="text-xs text-slate-400">Med/Low</p></div>
         </div>`;
-
         if (score.overall !== undefined) {
             const grade = score.grade || '—';
             const gradeColor = grade === 'A' ? 'text-emerald-400' : grade === 'B' ? 'text-blue-400' : grade === 'C' ? 'text-yellow-400' : 'text-rose-400';
-            html += `<div class="bg-slate-900 border border-slate-700 rounded-lg p-3 flex items-center gap-4">
-                <span class="text-3xl font-black ${gradeColor}">${grade}</span>
-                <div><p class="text-sm text-white font-semibold">Compliance Score: ${score.overall}%</p><p class="text-xs text-slate-400">Compliance Score</p></div>
-            </div>`;
+            html += `<div class="bg-slate-900 border border-slate-700 rounded-lg p-3 flex items-center gap-4"><span class="text-3xl font-black ${gradeColor}">${grade}</span><div><p class="text-sm text-white font-semibold">Compliance Score: ${score.overall}%</p><p class="text-xs text-slate-400">Compliance Score</p></div></div>`;
         }
-
         if (vulns.length > 0) {
             const sevColor = s => s === 'CRITICAL' ? 'bg-rose-950 text-rose-400 border-rose-900' : s === 'HIGH' ? 'bg-orange-950 text-orange-400 border-orange-900' : s === 'MEDIUM' ? 'bg-yellow-950 text-yellow-400 border-yellow-900' : 'bg-slate-800 text-slate-400 border-slate-700';
             html += `<div class="space-y-2">`;
             vulns.slice(0, 20).forEach(v => {
                 html += `<div class="bg-slate-900/60 border border-slate-800 rounded-lg p-3 space-y-1">
                     <div class="flex items-center gap-2 flex-wrap">
-                        <span class="px-2 py-0.5 text-xs font-bold rounded border ${sevColor(v.severity)}">${v.severity}</span>
+                        <span class="px-2 py-0.5 text-xs font-bold rounded border ${sevColor(v.severity)}">${escHtml(v.severity)}</span>
                         <span class="text-sm text-white font-medium">${escHtml(v.title || v.type || '—')}</span>
                         ${v.file ? `<span class="text-xs text-slate-500 font-mono">${escHtml(v.file)}</span>` : ''}
                     </div>
@@ -630,7 +715,6 @@
         } else if (total === 0) {
             html += `<div class="bg-emerald-950/30 border border-emerald-800 rounded-lg p-4 text-emerald-400 text-sm">✅ No issues found.</div>`;
         }
-
         html += `</div>`;
         return html;
     }
@@ -641,73 +725,49 @@
         if (!prompt) return alert('Please enter a prompt.');
         const btn = event.target; btn.textContent = 'Scanning...'; btn.disabled = true;
         try {
-            const res = await fetch(`${API}/api/v1/shield`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...h },
-                body: JSON.stringify({ prompt })
-            });
+            const res = await fetch(`${API}/api/v1/shield`, { method:'POST', headers:{'Content-Type':'application/json', ...h}, body:JSON.stringify({ prompt }) });
             showScanResult('shieldResult', await res.json());
         } catch(e) { alert('Error: ' + e.message); }
         finally { btn.textContent = 'Test Prompt'; btn.disabled = false; }
     }
-
     async function runCodeScan() {
         const h = getToolHeaders(); if (!h) return;
         const code = document.getElementById('codeInput').value.trim();
         if (!code) return alert('Please enter code.');
         const btn = event.target; btn.textContent = 'Scanning...'; btn.disabled = true;
         try {
-            const res = await fetch(`${API}/api/v1/scan/code`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...h },
-                body: JSON.stringify({
-                    code,
-                    filename: document.getElementById('codeFilename').value || 'code.py',
-                    engine_mode: document.getElementById('codeEngine').value
-                })
-            });
+            const res = await fetch(`${API}/api/v1/scan/code`, { method:'POST', headers:{'Content-Type':'application/json', ...h},
+                body:JSON.stringify({ code, filename: document.getElementById('codeFilename').value || 'code.py', engine_mode: document.getElementById('codeEngine').value }) });
             showScanResult('codeResult', await res.json());
         } catch(e) { alert('Error: ' + e.message); }
         finally { btn.textContent = 'Scan Code'; btn.disabled = false; }
     }
-
     async function runRepoScan() {
         const h = getToolHeaders(); if (!h) return;
         const repo_url = document.getElementById('repoUrl').value.trim();
         if (!repo_url) return alert('Please enter a repo URL.');
         const btn = event.target; btn.textContent = 'Scanning...'; btn.disabled = true;
         try {
-            const res = await fetch(`${API}/api/v1/scan/repo`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...h },
-                body: JSON.stringify({ repo_url, branch: document.getElementById('repoBranch').value || 'main' })
-            });
+            const res = await fetch(`${API}/api/v1/scan/repo`, { method:'POST', headers:{'Content-Type':'application/json', ...h}, body:JSON.stringify({ repo_url, branch: document.getElementById('repoBranch').value || 'main' }) });
             showScanResult('repoResult', await res.json());
         } catch(e) { alert('Error: ' + e.message); }
         finally { btn.textContent = 'Scan Repo'; btn.disabled = false; }
     }
-
     async function runUrlScan() {
         const h = getToolHeaders(); if (!h) return;
         const url = document.getElementById('urlInput').value.trim();
         if (!url) return alert('Please enter a URL.');
         const btn = event.target; btn.textContent = 'Scanning...'; btn.disabled = true;
         try {
-            const res = await fetch(`${API}/api/v1/scan/url`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...h },
-                body: JSON.stringify({ url })
-            });
+            const res = await fetch(`${API}/api/v1/scan/url`, { method:'POST', headers:{'Content-Type':'application/json', ...h}, body:JSON.stringify({ url }) });
             showScanResult('urlResult', await res.json());
         } catch(e) { alert('Error: ' + e.message); }
         finally { btn.textContent = 'Scan URL'; btn.disabled = false; }
     }
-
     function updateZipLabel() {
         const f = document.getElementById('zipFile').files[0];
         document.getElementById('zipLabel').textContent = f ? f.name + ' (' + (f.size/1024/1024).toFixed(2) + ' MB)' : 'No file chosen';
     }
-
     async function runUploadScan() {
         const h = getToolHeaders(); if (!h) return;
         const file = document.getElementById('zipFile').files[0];
@@ -715,29 +775,22 @@
         const btn = event.target; btn.textContent = 'Uploading...'; btn.disabled = true;
         try {
             const form = new FormData(); form.append('file', file);
-            const res = await fetch(`${API}/api/v1/scan/upload`, { method: 'POST', headers: h, body: form });
+            const res = await fetch(`${API}/api/v1/scan/upload`, { method:'POST', headers:h, body:form });
             showScanResult('uploadResult', await res.json());
         } catch(e) { alert('Error: ' + e.message); }
         finally { btn.textContent = 'Upload & Scan'; btn.disabled = false; }
     }
-
     async function runSeoScan() {
         const url = document.getElementById('seoUrl').value.trim();
         if (!url) return alert('Please enter a URL.');
         const max_pages = parseInt(document.getElementById('seoMaxPages').value) || 20;
         const btn = event.target; btn.textContent = 'Scanning...'; btn.disabled = true;
         try {
-            const res = await fetch(`${API}/api/v1/scan/seo`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-                body: JSON.stringify({ url, max_pages })
-            });
-            const data = await res.json();
-            showSeoResult('seoResult', data);
+            const res = await fetch(`${API}/api/v1/scan/seo`, { method:'POST', headers:{'Content-Type':'application/json', 'Authorization':`Bearer ${getToken()}`}, body:JSON.stringify({ url, max_pages }) });
+            showSeoResult('seoResult', await res.json());
         } catch(e) { alert('Error: ' + e.message); }
         finally { btn.textContent = '\u{1F50D} Scan for SEO Poison'; btn.disabled = false; }
     }
-
     function showSeoResult(elId, data) {
         const el = document.getElementById(elId);
         el.classList.remove('hidden');
@@ -752,12 +805,7 @@
         const grade = score.grade || '&#8212;';
         const gradeColor = grade === 'A' ? 'text-emerald-400' : grade === 'B' ? 'text-blue-400' : grade === 'C' ? 'text-yellow-400' : 'text-rose-400';
         const sevColor = s => s === 'HIGH' ? 'bg-rose-950 text-rose-400 border-rose-900' : s === 'MEDIUM' ? 'bg-yellow-950 text-yellow-400 border-yellow-900' : 'bg-slate-800 text-slate-400 border-slate-700';
-        const typeLabel = {
-            SPAM_KEYWORD: 'Spam Keyword', CLOAKING: 'Cloaking',
-            SUSPICIOUS_REDIRECT: 'Suspicious Redirect', HIDDEN_CONTENT: 'Hidden Content',
-            LINK_FARM: 'Link Farm', ROBOTS_SPAM: 'robots.txt Spam',
-            WEBSHELL_PATTERN: 'Webshell Pattern', HTACCESS_CLOAKING: '.htaccess Cloaking',
-        };
+        const typeLabel = { SPAM_KEYWORD:'Spam Keyword', CLOAKING:'Cloaking', SUSPICIOUS_REDIRECT:'Suspicious Redirect', HIDDEN_CONTENT:'Hidden Content', LINK_FARM:'Link Farm', ROBOTS_SPAM:'robots.txt Spam', WEBSHELL_PATTERN:'Webshell Pattern', HTACCESS_CLOAKING:'.htaccess Cloaking' };
         let html = '<div class="space-y-4">';
         html += `<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div class="bg-slate-900 border border-slate-700 rounded-lg p-3 text-center"><p class="text-2xl font-bold text-white">${data.total_issues ?? 0}</p><p class="text-xs text-slate-400">Total Issues</p></div>
