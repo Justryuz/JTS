@@ -1,13 +1,18 @@
 """
-Engine Updater — Auto-update rule patterns & ML models
-Sumber rules: OWASP LLM Top 10 (community patterns)
+Engine Updater — Auto-update rule patterns & ML models (LIVE engines.* stack)
+
+Targets the modules the running gateway actually uses:
+  - engines.rule_engine  (PROMPT_INJECTION_RULES / JAILBREAK_RULES)
+  - engines.ml_engine    (all HuggingFace model loaders)
+
+Rules source: OWASP LLM Top 10 (community patterns).
 """
 
 import logging
+import os
 import shutil
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +26,7 @@ class UpdateResult:
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
-# Latest OWASP LLM01/LLM02 patterns — dikemaskini secara manual mengikut OWASP releases
+# Latest OWASP LLM01/LLM02 patterns — updated manually per OWASP releases
 LATEST_INJECTION_RULES = [
     (r"ignore\s+(all\s+)?previous\s+instructions?", "ignore_previous_instructions"),
     (r"disregard\s+(all\s+)?previous\s+instructions?", "disregard_instructions"),
@@ -74,19 +79,26 @@ LATEST_JAILBREAK_RULES = [
     (r"(crescendo|incremental).{0,30}(bypass|jailbreak|escalat)", "crescendo_attack"),
 ]
 
+# All models the live engines.ml_engine actually loads
 MODELS_TO_UPDATE = [
     "deepset/deberta-v3-base-injection",
+    "protectai/deberta-v3-base-prompt-injection-v2",
     "martin-ha/toxic-comment-model",
+    "unitary/toxic-bert",
+    "mrm8488/codebert-base-finetuned-detect-insecure-code",
 ]
 
 
 def update_rules() -> bool:
-    """Kemaskini rule patterns dalam rule_engine.py dengan patterns terkini."""
+    """Update rule patterns in the live engines.rule_engine module."""
     try:
-        import engine.rule_engine as rule_engine
+        import engines.rule_engine as rule_engine
         rule_engine.PROMPT_INJECTION_RULES = LATEST_INJECTION_RULES
         rule_engine.JAILBREAK_RULES = LATEST_JAILBREAK_RULES
-        logger.info(f"Rules updated: {len(LATEST_INJECTION_RULES)} injection + {len(LATEST_JAILBREAK_RULES)} jailbreak patterns")
+        logger.info(
+            f"Rules updated: {len(LATEST_INJECTION_RULES)} injection + "
+            f"{len(LATEST_JAILBREAK_RULES)} jailbreak patterns"
+        )
         return True
     except Exception as e:
         logger.error(f"Rule update failed: {e}")
@@ -94,37 +106,41 @@ def update_rules() -> bool:
 
 
 def refresh_models() -> tuple[list, list]:
-    """Clear HuggingFace cache dan invalidate lru_cache supaya model re-download."""
-    refreshed = []
-    errors = []
+    """Clear HuggingFace cache and invalidate lru_cache so models re-download."""
+    refreshed: list = []
+    errors: list = []
 
     try:
         import huggingface_hub
         cache_dir = huggingface_hub.constants.HF_HUB_CACHE
     except Exception:
-        import os
         cache_dir = os.path.expanduser("~/.cache/huggingface/hub")
 
     for model_id in MODELS_TO_UPDATE:
         try:
-            # Clear cache folder untuk model ini
             folder_name = "models--" + model_id.replace("/", "--")
-            import os
             model_cache_path = os.path.join(cache_dir, folder_name)
             if os.path.exists(model_cache_path):
                 shutil.rmtree(model_cache_path)
                 logger.info(f"Cache cleared: {model_id}")
-
             refreshed.append(model_id)
         except Exception as e:
             errors.append(f"{model_id}: {str(e)}")
             logger.error(f"Model cache clear failed for {model_id}: {e}")
 
-    # Invalidate lru_cache — model akan re-download semasa scan seterusnya
+    # Invalidate every lru_cache loader in the live ml_engine
     try:
-        from engine import ml_engine
-        ml_engine._load_injection_model.cache_clear()
-        ml_engine._load_toxic_model.cache_clear()
+        from engines import ml_engine
+        for loader_name in (
+            "_load_injection_model",
+            "_load_injection_v2_model",
+            "_load_toxic_model",
+            "_load_toxic_bert_model",
+            "_load_code_model",
+        ):
+            loader = getattr(ml_engine, loader_name, None)
+            if loader is not None and hasattr(loader, "cache_clear"):
+                loader.cache_clear()
         logger.info("ML model cache invalidated — will re-download on next scan")
     except Exception as e:
         errors.append(f"lru_cache clear: {str(e)}")

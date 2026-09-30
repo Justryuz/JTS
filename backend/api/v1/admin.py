@@ -25,7 +25,7 @@ def update_engine(
     request: Request,
     user_id: str = Depends(get_current_user_id),
 ):
-    from engine.updater import run_update
+    from engines.updater import run_update
     result = run_update(
         update_rules_flag=body.update_rules,
         update_models_flag=body.update_models,

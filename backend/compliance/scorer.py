@@ -4,7 +4,7 @@ Mengira skor pematuhan berdasarkan OWASP Top 10, NACSA, JPDP, MCMC, AIGE
 """
 
 from dataclasses import dataclass, field
-from engine.cve_scanner import ScanResult
+from scanners.cve_scanner import ScanResult
 
 
 @dataclass
